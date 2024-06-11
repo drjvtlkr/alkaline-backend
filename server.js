@@ -1,0 +1,40 @@
+import express from "express";
+import mongooseConnection from "./mongo.js";
+import bodyParser from "body-parser";
+// import appRoutes from "./routes/index.js";
+import cors from "cors";
+import dotenv from "dotenv";
+dotenv.config();
+
+const port = process.env.PORT || 4000;
+
+const app = express();
+
+const corsOrigin = ["http://localhost:5173"];
+
+app.use(
+  cors({
+    origin: corsOrigin,
+    methods: ["GET", "POST", "PUT", "DELETE"],
+    credentials: true,
+  })
+);
+
+app.use(bodyParser.json({ extended: true }));
+app.use(bodyParser.urlencoded({ extended: true }));
+
+mongooseConnection();
+
+app.get("/health", (req, res) => {
+  return res.status(200).json({
+    msg: "server, up and running",
+  });
+});
+
+// app.use("/api", appRoutes);
+
+if (process.env.DEPLOY_ENV === "local") {
+  app.listen(4000, (req, res) => {
+    console.log(`Server is listening on port ${port}`);
+  });
+}
