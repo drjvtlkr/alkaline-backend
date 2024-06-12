@@ -7,7 +7,7 @@ const reqString = {
   required: true,
 };
 
-const userSchema = mongoose.Schema({
+const userSchema = new mongoose.Schema({
   username: reqString,
   password: reqString,
   phone: {
@@ -19,27 +19,27 @@ const userSchema = mongoose.Schema({
     type: String,
     enum: ["ACTIVE", "INACTIVE"],
     default: "ACTIVE",
-},
-role: {
-  type: String,
-  enum: ["ADMIN", "CUSTOMER"],
-  default: "CUSTOMER",
-},
-resetPasswordToken: String,
-resetPasswordExpires: Date,
+  },
+  role: {
+    type: String,
+    enum: ["ADMIN", "CUSTOMER"],
+    default: "CUSTOMER",
+  },
+  resetPasswordToken: String,
+  resetPasswordExpires: Date,
 });
 
 userSchema.pre("save", async function (next) {
-if (!this.isModified("password")) {
-  next();
-}
+  if (!this.isModified("password")) {
+    next();
+  }
 
-const salt = await bcrypt.genSalt(10);
-this.password = await bcrypt.hash(this.password, salt);
+  const salt = await bcrypt.genSalt(10);
+  this.password = await bcrypt.hash(this.password, salt);
 });
 
 userSchema.methods.matchPassword = async function (enteredPassword) {
-return await bcrypt.compare(enteredPassword, this.password);
+  return await bcrypt.compare(enteredPassword, this.password);
 };
 
 userSchema.methods.generatePasswordReset = function () {

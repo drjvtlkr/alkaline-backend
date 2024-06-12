@@ -5,7 +5,7 @@ const reqString = {
   required: true,
 };
 
-const customerSchema = mongoose.Schema({
+const customerSchema = new mongoose.Schema({
   customerName: {
     type: reqString,
   },
