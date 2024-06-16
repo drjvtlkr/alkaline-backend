@@ -6,10 +6,19 @@ const reqString = {
 };
 
 const customerSchema = new mongoose.Schema({
-  customerName: {
+  firstName: {
+    type: reqString,
+  },
+  lastName: {
     type: reqString,
   },
   user: { type: mongoose.Schema.Types.ObjectId, ref: "users" },
+  dateCreated: {type:Date, default:Date.now},
+  dateModified: {type:Date, default:Date.now},
+  gender: { type: String, enum:[
+    "MALE",
+    "FEMALE"
+  ]}
 });
 
 const Customer = mongoose.model("customers", customerSchema);
