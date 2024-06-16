@@ -1,7 +1,7 @@
 import express from "express";
 import mongooseConnection from "./mongo.js";
 import bodyParser from "body-parser";
-// import appRoutes from "./routes/index.js";
+import appRoutes from "./route/index.js";
 import cors from "cors";
 import dotenv from "dotenv";
 dotenv.config();
@@ -31,7 +31,7 @@ app.get("/health", (req, res) => {
   });
 });
 
-// app.use("/api", appRoutes);
+app.use("/api", appRoutes);
 
 if (process.env.DEPLOY_ENV === "local") {
   app.listen(4000, (req, res) => {
