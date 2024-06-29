@@ -6,8 +6,8 @@ export const registerCustomer = asyncHandler(async (req, res) => {
   try {
     const { firstName, lastName, gender, phone, password } = req.body;
     let userDoc = await User.findOne({ phone });
-
-    if (!userDoc) {
+    let customerDoc = await Customer.findOne({ phone });
+    if (userDoc) {
       console.log("Customer already exist " + phone);
       return res.status(409).json({
         success: false,
@@ -22,7 +22,7 @@ export const registerCustomer = asyncHandler(async (req, res) => {
       role: "CUSTOMER",
     });
 
-    const customerDoc = await Customer.create({
+    customerDoc = await Customer.create({
       user: userDoc._id,
       firstName,
       lastName,
