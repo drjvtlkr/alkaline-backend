@@ -56,20 +56,56 @@ export const registerAdmin = asyncHandler(async (req, res) => {
   }
 });
 
-export const getUserById = asyncHandler(async(req, res)=>{
+export const getUserById = asyncHandler(async (req, res) => {
   try {
-    const id = req.params.id
+    const id = req.params.id;
 
     const userDoc = await User.findById(id);
-    if(!userDoc){
+    if (!userDoc) {
       console.log("User not found");
-      return res.status(400).json({success: false, msg: "User not found"});
+      return res.status(400).json({ success: false, msg: "User not found" });
     }
-    return res.status(200).json({success: true, userDoc});
+    return res.status(200).json({ success: true, userDoc });
   } catch (error) {
-    console.log(error, {success:false, msg:`Could not find user `});
-    return res.status(500).json({success: false, error})
+    console.log(error, { success: false, msg: `Could not find user ` });
+    return res.status(500).json({ success: false, error });
   }
 });
 
-
+export const getAllUsers = asyncHandler(async (req, res) => {
+  try {
+    const page = parseInt(req.query.page) || 1;
+    const pageSize = parseInt(req.query.pageSize) || 10;
+    const sortField = req.query.sortField || "id";
+    const sortOrder = req.query.sortOrder || "asc";
+    const sort = {};
+    sort[sortField] = sortOrder === "asc" ? 1 : -1;
+    const startIndex = (page - 1) * pageSize;
+    const totalDocuments = await User.countDocuments({});
+    const totalPages = Math.ceil(totalDocuments / pageSize);
+    const userDoc = await User.find({})
+      .sort(sort)
+      .skip(startIndex)
+      .limit(pageSize)
+      .exec();
+    if (!userDoc) {
+      console.log("User not found");
+      return res.status(400).json({ success: false, msg: "User not found" });
+    }
+    return res.status(200).json({
+      success: true,
+      userDoc,
+      pagination: {
+        page,
+        pageSize,
+        totalPages,
+        totalDocuments,
+        hasNextPage: page < totalPages,
+        hasPrevPage: page > 1,
+      },
+    });
+  } catch (error) {
+    console.log(error, { success: false, msg: `Could not find user ` });
+    return res.status(500).json({ success: false, error });
+  }
+});

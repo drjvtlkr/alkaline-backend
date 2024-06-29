@@ -16,6 +16,11 @@ const orderSchema = new mongoose.Schema({
     ref: "shops",
     required: true,
   },
+  booking:{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "bookings",
+    required: true,
+  },
   bookingDate: {
     type: Date,
     required: true,
