@@ -1,10 +1,15 @@
 import mongoose from "mongoose";
-import payments from "razorpay/dist/types/payments";
 
 const reqstring = {
   type: String,
   required: true,
 };
+
+const paymentSchema = mongoose.Schema({
+  paymentId: reqstring,
+  mode: { type: String },
+  enum: ["ONLINE", "OFFLINE"],
+});
 
 const bookingSchema = mongoose.Schema({
   customer: {
@@ -12,27 +17,29 @@ const bookingSchema = mongoose.Schema({
     ref: "customers",
     required: true,
   },
-  shop: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: "shops",
-    required: true,
-  },
+  // shop: {
+  //   type: mongoose.Schema.Types.ObjectId,
+  //   ref: "shops",
+  //   required: true,
+  // },
   bookingDate: {
     type: Date,
     required: true,
   },
   bookingTime: reqstring,
+  totalPrice: { type: Number },
 
-  payments: {
+  payments: paymentSchema,
+
+  status: {
     type: String,
-    enum: ["ONLINE", "OFFLINE"],
-    required: true,
-  },
-  status :{
-    type: String,
-    enum: ["INITIATED", "PAID", "COMPLETED", "CANCELLED"],
+    enum: ["INITIATED", "PAID", "COMPLETED", "CANCELED"],
     default: "INITIATED",
   },
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now },
 });
+
+const Booking = mongoose.model("bookings", bookingSchema);
+
+export default Booking;

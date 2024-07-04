@@ -14,7 +14,19 @@ const customerSchema = new mongoose.Schema({
   gender: { 
     type: String, 
     enum: ["MALE", "FEMALE"] 
-  }
+  },
+  shopName: 
+    reqString,
+  shopNumber: reqString,
+  shopAddress: reqString,
+  pincode: {
+    type: Number,
+    required: true
+  },
+  landmark: {
+    type: String,
+    required: false,
+  },
 });
 
 const Customer = mongoose.model("customers", customerSchema);

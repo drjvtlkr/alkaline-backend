@@ -4,7 +4,7 @@ import Customer from "../schema/CustomerSchema.js";
 
 export const registerCustomer = asyncHandler(async (req, res) => {
   try {
-    const { firstName, lastName, gender, phone, password } = req.body;
+    const { firstName, lastName, gender, phone, password, shopName, shopNumber, shopAddress, pincode, landmark } = req.body;
     let userDoc = await User.findOne({ phone });
     let customerDoc = await Customer.findOne({ phone });
     if (userDoc) {
@@ -27,6 +27,11 @@ export const registerCustomer = asyncHandler(async (req, res) => {
       firstName,
       lastName,
       gender,
+      shopAddress,
+      shopName,
+      shopNumber,
+      pincode,
+      landmark
     });
 
     return res.status(201).json({ success: true, customerDoc });
@@ -111,7 +116,7 @@ export const getCustomerById= asyncHandler(async(req, res)=>{
         const customerDoc = await Customer.findById(id)
         if(!customerDoc){
             return res.status(404).json({
-                success: false, msg:`cusotmer not found`
+                success: false, msg:`customer not found`
             })
         }
          return res.status(200).json({success:true, customerDoc})
