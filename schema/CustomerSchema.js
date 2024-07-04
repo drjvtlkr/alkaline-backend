@@ -11,10 +11,6 @@ const customerSchema = new mongoose.Schema({
   user: { type: mongoose.Schema.Types.ObjectId, ref: "users" },
   dateCreated: { type: Date, default: Date.now },
   dateModified: { type: Date, default: Date.now },
-  gender: { 
-    type: String, 
-    enum: ["MALE", "FEMALE"] 
-  },
   shopName: 
     reqString,
   shopNumber: reqString,

@@ -4,7 +4,7 @@ import Customer from "../schema/CustomerSchema.js";
 
 export const registerCustomer = asyncHandler(async (req, res) => {
   try {
-    const { firstName, lastName, gender, phone, password, shopName, shopNumber, shopAddress, pincode, landmark } = req.body;
+    const { firstName, lastName, phone, password, shopName, shopNumber, shopAddress, pincode, landmark } = req.body;
     let userDoc = await User.findOne({ phone });
     let customerDoc = await Customer.findOne({ phone });
     if (userDoc) {
@@ -26,7 +26,6 @@ export const registerCustomer = asyncHandler(async (req, res) => {
       user: userDoc._id,
       firstName,
       lastName,
-      gender,
       shopAddress,
       shopName,
       shopNumber,
@@ -43,7 +42,7 @@ export const registerCustomer = asyncHandler(async (req, res) => {
 export const updateCustomer = asyncHandler(async (req, res) => {
   try {
     const id = req.params.id;
-    const { firstName, lastName, gender, phone } = req.body;
+    const { firstName, lastName, shopName,shopNumber, shopAddress, phone, pincode, landmark } = req.body;
     let customerDoc;
     customerDoc = await Customer.findById(id);
     if (!customerDoc) {
@@ -55,15 +54,19 @@ export const updateCustomer = asyncHandler(async (req, res) => {
     customerDoc = await Customer.updateOne({
       firstName,
       lastName,
-      gender,
       phone,
+      shopName,
+      shopNumber,
+      shopAddress,
+      pincode,
+      landmark
     });
 
     return res
       .status(200)
       .json({
         success: true,
-        msg: `Customer with id ${id} updated successfullt`,
+        msg: `Customer with id ${id} updated successfully`,
         customerDoc,
       });
   } catch (error) {
