@@ -4,14 +4,14 @@ import Booking from "../schema/BookingSchema.js";
 
 export const initiateBooking = asyncHandler(async (req, res) => {
   try {
-    const { customerId, bookingDate, bookingTime } = req.body;
+    const { customerId, bookingDate, bookingTime, unit } = req.body;
 
     const customerDoc = await Customer.findById(customerId);
     console.log(customerId);
     if (!customerDoc) {
       return res.status(404).json({
         success: false,
-        msg: `customer not found`,
+        msg: "customer not found",
       });
     }
     const bookingDoc = await Booking.create({
@@ -29,7 +29,7 @@ export const initiateBooking = asyncHandler(async (req, res) => {
     console.error(error);
     return res
       .status(500)
-      .json({ msg: `Internal Server Error`, success: false });
+      .json({ msg: 'Internal Server Error', success: false });
   }
 });
 
@@ -136,7 +136,7 @@ export const markBookingComplete = asyncHandler(async (req, res) => {
 
     if (!bookingDoc) {
       return res.status(404).json({
-        message: `Booking ID not found ${bookingId}`,
+        message:` Booking ID not found ${bookingId}`,
         success: false,
         bookingId,
       });
@@ -144,7 +144,7 @@ export const markBookingComplete = asyncHandler(async (req, res) => {
 
     if (bookingDoc.status === "COMPLETED") {
       return res.status(400).json({
-        message: `Booking is already completed`,
+        message: "Booking is already completed",
         success: false,
         bookingId,
       });
