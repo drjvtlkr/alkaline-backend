@@ -18,11 +18,11 @@ const bookingSchema = mongoose.Schema({
     required: true,
   },
 
-  bookingDate: {
+  bookingDateTime: {
     type: Date,
     required: true,
   },
-  bookingTime: reqstring,
+  // bookingTime: reqstring,
   totalPrice: { type: Number },
   products: [
     {
@@ -39,6 +39,17 @@ const bookingSchema = mongoose.Schema({
   },
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now },
+});
+
+bookingSchema.pre("save", async function (next) {
+  if (this.bookingDateTime) {
+    console.log(moment(this.bookingDateTime).tz("Asia/Kolkata").toDate());
+    this.bookingDateTime = moment(this.bookingDateTime)
+      .tz("Asia/Kolkata")
+      .toDate();
+  }
+  this.dateModified = new Date();
+  next();
 });
 
 const Booking = mongoose.model("bookings", bookingSchema);
