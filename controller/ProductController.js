@@ -52,3 +52,43 @@ export const updateProduct = asyncHandler(async (req, res) => {
     return res.status(500).json({ msg: `Internal Server Error` });
   }
 });
+
+export const getAllProducts = asyncHandler(async(req, res)=>{
+  try {
+    const products = await Product.find({});
+    return res.status(200).json({success:true, products});  
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ msg: `Internal Server Error` });
+  }
+})
+
+export const getProductById = asyncHandler(async(req, res)=>{
+  try {
+    const id = req.params.id;
+    const productDoc = await Product.findById(id)
+    if(!productDoc){
+      return res.status(404).json({success:false, msg:`Product with ID ${id} not found`})
+    }else{
+      return res.status(200).json({success:true, productDoc})
+    }
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({msg:`Internal Server Error`})
+  }
+})
+
+export const deleteProduct = asyncHandler(async(req, res)=>{
+  try {
+    const id = req.params.id;
+    const productDoc = await Product.findByIdAndDelete(id)
+    if(!productDoc){
+      return res.status(404).json({success:false, msg:`Product with ID ${id} not found`})
+    }else{
+      return res.status(200).json({success:true, msg:`Product with ID ${id} deleted successfully`})
+    }
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({msg:`Internal Server Error`})
+  }
+})
