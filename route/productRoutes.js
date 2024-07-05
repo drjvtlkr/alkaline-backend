@@ -7,6 +7,6 @@ productRouter.route("/addProduct").post(addProduct)
 productRouter.route("/editProduct/:id").post(updateProduct)
 productRouter.route("/getAllProducts").get(getAllProducts)
 productRouter.route("/getProductById/:id").get(getProductById)
-productRouter.route("/deleteProduct/:id").get(deleteProduct )
+productRouter.route("/deleteProduct/:id").delete(deleteProduct )
 
 export default productRouter

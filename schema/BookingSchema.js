@@ -17,19 +17,19 @@ const bookingSchema = mongoose.Schema({
     ref: "customers",
     required: true,
   },
-  units:[{type: mongoose.Schema.Types.ObjectId, ref: "units"}],
-  // shop: {
-  //   type: mongoose.Schema.Types.ObjectId,
-  //   ref: "shops",
-  //   required: true,
-  // },
+
   bookingDate: {
     type: Date,
     required: true,
   },
   bookingTime: reqstring,
   totalPrice: { type: Number },
-
+  products: [
+    {
+      product: { type: mongoose.Schema.Types.ObjectId, ref: "products" },
+      count: { type: Number },
+    },
+  ],
   payments: paymentSchema,
 
   status: {
