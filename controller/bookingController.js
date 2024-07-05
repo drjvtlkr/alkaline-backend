@@ -1,10 +1,11 @@
 import asyncHandler from "express-async-handler";
 import Customer from "../schema/CustomerSchema.js";
 import Booking from "../schema/BookingSchema.js";
+import Product from "../schema/ProductsSchema.js"
 
 export const initiateBooking = asyncHandler(async (req, res) => {
   try {
-    const { customerId, bookingDate, bookingTime, unit } = req.body;
+    const { customerId, bookingDate, bookingTime, products } = req.body;
 
     const customerDoc = await Customer.findById(customerId);
     console.log(customerId);
@@ -14,10 +15,19 @@ export const initiateBooking = asyncHandler(async (req, res) => {
         msg: "customer not found",
       });
     }
+
+    for(const product of products){
+      const productDoc= await Product.findById(product.product)
+      if(!productDoc){
+        return res.status(404).json({msg:`Prodcut not found with id ${product.product}`, success:false})
+      }
+    }
+
     const bookingDoc = await Booking.create({
       customer: customerId,
       bookingDate,
       bookingTime,
+      products
     });
 
     res.status(201).json({
