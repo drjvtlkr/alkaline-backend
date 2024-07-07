@@ -17,7 +17,6 @@ const bookingSchema = mongoose.Schema({
     ref: "customers",
     required: true,
   },
-  units:[{type: mongoose.Schema.Types.ObjectId, ref: "units"}],
   // shop: {
   //   type: mongoose.Schema.Types.ObjectId,
   //   ref: "shops",
@@ -29,6 +28,7 @@ const bookingSchema = mongoose.Schema({
   },
   bookingTime: reqstring,
   totalPrice: { type: Number },
+  
 
   payments: paymentSchema,
 
