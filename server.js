@@ -38,3 +38,16 @@ if (process.env.DEPLOY_ENV === "local") {
     console.log(`Server is listening on port ${port}`);
   });
 }
+else if (process.env.DEPLOY_ENV === "prod") {
+  const httpsServer = https.createServer(
+    {
+      cert: fs.readFileSync(process.env.SSL_CRT_PATH),
+      key: fs.readFileSync(process.env.SSL_KEY_PATH),
+    },
+    app
+  );
+
+  httpsServer.listen(4000, () => {
+    console.log("HTTPS Server running on port 443");
+  });
+}
