@@ -1,9 +1,9 @@
 import asyncHandler from "express-async-handler";
 import User from "../schema/UserSchema.js";
+import Customer from "../schema/CustomerSchema.js";
 import jwt from "jsonwebtoken";
 import dotenv from "dotenv";
 dotenv.config();
-
 export const login = asyncHandler(async (req, res) => {
   try {
     const { phone, password } = req.body;
@@ -65,14 +65,17 @@ export const getUserData = asyncHandler(async (req, res) => {
   const { token } = req.body;
   try {
     const user = jwt.verify(token, process.env.JWT_SECRET);
-    console.log(user)
     const userPhone = user.phone;
-    console.log("phone: "+userPhone)
-    User.findOne({ phone: userPhone }).then((data) => {
-      return res.send({ status: "ok", data: data });
-    });
+    const userData = await User.findOne({ phone: userPhone });
+
+    if (userData.role === "CUSTOMER") {
+      const customerData = await Customer.findOne({ user: userData._id });
+      return res.send({ status: "ok", data: userData, customerData: customerData });
+    }
+
+    return res.send({ status: "ok", data: userData });
   } catch (error) {
-    console.log(error, { success: false, msg: `Could not find user ` });
+    console.log(error, { success: false, msg: `Could not find user` });
     return res.status(500).json({ success: false, error });
   }
 });
