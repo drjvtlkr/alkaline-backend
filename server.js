@@ -1,10 +1,12 @@
-import express from "express";
-import mongooseConnection from "./mongo.js";
+import express, { json } from "express";
 import bodyParser from "body-parser";
-import appRoutes from "./route/index.js";
 import cors from "cors";
 import dotenv from "dotenv";
+import mongooseConnection from "./mongo.js";
+import appRoutes from "./route/index.js";
 dotenv.config();
+import fs from 'fs';
+import https from 'https';
 
 const port = process.env.PORT || 4000;
 
