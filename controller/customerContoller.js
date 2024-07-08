@@ -33,7 +33,7 @@ export const registerCustomer = asyncHandler(async (req, res) => {
       landmark
     });
 
-    return res.status(201).json({ success: true, customerDoc });
+    return res.status(201).json({ success: true, customerDoc, status: "ok" });
   } catch (error) {
     console.error(error, { success: false, msg: `Can not register the user` });
   }
