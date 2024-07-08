@@ -280,16 +280,16 @@ export const getAllBookingsBetweenDates = asyncHandler(async (req, res) => {
     if (isNaN(start.getTime()) || isNaN(end.getTime())) {
       return res
         .status(400)
-        .json({ super: false, message: "Invalid data format" });
+        .json({ success: false, message: "Invalid date format" });
     }
-
+    end.setHours(23, 59, 59, 999);
     const totalDocuments = await Booking.countDocuments({
-      bookingDateTime: { $gte: start, $lte: end },
+      bookingDate: { $gte: start, $lte: end },
     });
     const totalPages = Math.ceil(totalDocuments / pageSize);
 
     const bookingDoc = await Booking.find({
-      bookingDateTime: {
+      bookingDate: {
         $gte: start,
         $lte: end,
       },
