@@ -1,8 +1,9 @@
 import asyncHandler from "express-async-handler";
 import Customer from "../schema/CustomerSchema.js";
 import Booking from "../schema/BookingSchema.js";
-import Product from "../schema/ProductsSchema.js"
+import Product from "../schema/ProductsSchema.js";
 import e from "express";
+import { populate } from "dotenv";
 
 export const initiateBooking = asyncHandler(async (req, res) => {
   try {
@@ -17,17 +18,22 @@ export const initiateBooking = asyncHandler(async (req, res) => {
       });
     }
 
-    for(const product of products){
-      const productDoc= await Product.findById(product.product)
-      if(!productDoc){
-        return res.status(404).json({msg:`Prodcut not found with id ${product.product}`, success:false})
+    for (const product of products) {
+      const productDoc = await Product.findById(product.product);
+      if (!productDoc) {
+        return res
+          .status(404)
+          .json({
+            msg: `Prodcut not found with id ${product.product}`,
+            success: false,
+          });
       }
     }
 
     const bookingDoc = await Booking.create({
       customer: customerId,
       bookingDateTime,
-      products
+      products,
     });
 
     res.status(201).json({
@@ -39,7 +45,7 @@ export const initiateBooking = asyncHandler(async (req, res) => {
     console.error(error);
     return res
       .status(500)
-      .json({ msg: 'Internal Server Error', success: false });
+      .json({ msg: "Internal Server Error", success: false });
   }
 });
 
@@ -146,7 +152,7 @@ export const markBookingComplete = asyncHandler(async (req, res) => {
 
     if (!bookingDoc) {
       return res.status(404).json({
-        message:` Booking ID not found ${bookingId}`,
+        message: ` Booking ID not found ${bookingId}`,
         success: false,
         bookingId,
       });
@@ -184,47 +190,57 @@ export const markBookingComplete = asyncHandler(async (req, res) => {
   }
 });
 
-export const getBookingByStatus  = asyncHandler(async(req,res)=>{
+export const getBookingByStatus = asyncHandler(async (req, res) => {
   try {
-    const status = req.params.status
+    const status = req.params.status;
 
-    const bookingDoc = await Booking.find({status: status})
-    if(!bookingDoc){
-      return res.status(404).json({msg: "Booking with this status not available", success: false, status})
+    const bookingDoc = await Booking.find({ status: status });
+    if (!bookingDoc) {
+      return res
+        .status(404)
+        .json({
+          msg: "Booking with this status not available",
+          success: false,
+          status,
+        });
     }
 
-    return res.status(200).json({success: true, bookingDoc})
+    return res.status(200).json({ success: true, bookingDoc });
   } catch (error) {
     console.error(error);
-    return res.status(500).json({msg:"INternal Server Error", success:false})
+    return res
+      .status(500)
+      .json({ msg: "INternal Server Error", success: false });
   }
-})
+});
 
-export const getBookingByCustomerId = asyncHandler(async(req, res)=>{
+export const getBookingByCustomerId = asyncHandler(async (req, res) => {
   try {
     const customerId = req.params.id;
     const page = parseInt(req.query.page) || 1;
-    const pageSize = parseInt(req.query.pageSize) ||10;
+    const pageSize = parseInt(req.query.pageSize) || 10;
     const sortField = req.query.sortField || "id";
     const sortOrder = req.query.sortOrder || "desc";
 
     const sort = {};
-    sort[sortField] = sortOrder ==="asc" ? 1 : -1;
-    const startIndex = (page -1 ) * pageSize;
-    const totalDocuments = await Booking.countDocuments({customer: customerId});
-    const totalPages = Math.ceil(totalDocuments/pageSize);
+    sort[sortField] = sortOrder === "asc" ? 1 : -1;
+    const startIndex = (page - 1) * pageSize;
+    const totalDocuments = await Booking.countDocuments({
+      customer: customerId,
+    });
+    const totalPages = Math.ceil(totalDocuments / pageSize);
 
-    const booking = await Booking.find({customer: customerId})
-    .populate("customer")
-    .populate("products")
-    .sort(sort)
-    .skip(startIndex)
-    .limit(pageSize)
-    .exec();
+    const booking = await Booking.find({ customer: customerId })
+      .populate("customer")
+      .populate("products")
+      .sort(sort)
+      .skip(startIndex)
+      .limit(pageSize)
+      .exec();
 
     return res.status(200).json({
       booking,
-      pagination:{
+      pagination: {
         page,
         pageSize,
         totalPages,
@@ -236,37 +252,40 @@ export const getBookingByCustomerId = asyncHandler(async(req, res)=>{
     });
   } catch (error) {
     console.error(error);
-    res.status(500).json({error, success:false});
+    res.status(500).json({ error, success: false });
   }
-})
+});
 
-export const getAllBookingsBetweenDates = asyncHandler(async(req ,res)=>{
+export const getAllBookingsBetweenDates = asyncHandler(async (req, res) => {
   try {
+    const startDate = req.query.startDate;
+    const endDate = req.query.endDate;
     const page = parseInt(req.query.page) || 1;
     const pageSize = parseInt(req.query.pageSize) || 10;
     const sortField = req.query.sortField || "name";
     const sortOrder = req.query.sortOrder || "asc";
     const sort = {};
     sort[sortField] = sortOrder === "asc" ? 1 : -1;
-    const startIndex = (page -1) * pageSize;
-    const {startDate, endDate} = req.query;
+    const startIndex = (page - 1) * pageSize;
 
-    if(!startDate || !endDate){
+    if (!startDate || !endDate) {
       return res.status(400).json({
         success: false,
-        message:"StartDate and endDate are required",
+        message: "StartDate and endDate are required",
       });
     }
 
     const start = new Date(startDate);
     const end = new Date(endDate);
-    if(isNaN(start.getTime()) || isNaN(end.getTime())){
+    if (isNaN(start.getTime()) || isNaN(end.getTime())) {
       return res
-      .status(400)
-      .json({super:false, message:"Invalid data format"});
+        .status(400)
+        .json({ super: false, message: "Invalid data format" });
     }
 
-    const totalDocuments = await Booking.countDocuments({});
+    const totalDocuments = await Booking.countDocuments({
+      bookingDateTime: { $gte: start, $lte: end },
+    });
     const totalPages = Math.ceil(totalDocuments / pageSize);
 
     const bookingDoc = await Booking.find({
@@ -274,13 +293,19 @@ export const getAllBookingsBetweenDates = asyncHandler(async(req ,res)=>{
         $gte: start,
         $lte: end,
       },
-    })      
-    .populate("products")
-    .populate("customer")
-    .sort(sort)
-    .skip(startIndex)
-    .limit(pageSize)
-    .exec();
+    })
+      .populate("products")
+      .populate({
+        path: "customer",
+        populate: {
+          path: "user",
+          model: "users",
+        },
+      })
+      .sort(sort)
+      .skip(startIndex)
+      .limit(pageSize)
+      .exec();
 
     return res.status(200).json({
       bookingDoc,
@@ -296,6 +321,6 @@ export const getAllBookingsBetweenDates = asyncHandler(async(req ,res)=>{
     });
   } catch (error) {
     console.error(error);
-    return res.status(500).json({success: false, error})
+    return res.status(500).json({ success: false, error });
   }
-})
+});
