@@ -288,7 +288,7 @@ export const getAllBookingsBetweenDates = asyncHandler(async (req, res) => {
     });
     const totalPages = Math.ceil(totalDocuments / pageSize);
 
-    const bookingDoc = await Booking.find({
+    let bookingDoc = await Booking.find({
       bookingDate: {
         $gte: start,
         $lte: end,
@@ -306,6 +306,8 @@ export const getAllBookingsBetweenDates = asyncHandler(async (req, res) => {
       .skip(startIndex)
       .limit(pageSize)
       .exec();
+
+      console.log(bookingDoc)
 
     return res.status(200).json({
       bookingDoc,
