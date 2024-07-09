@@ -26,7 +26,7 @@ export const login = asyncHandler(async (req, res) => {
 
     return res
       .status(200)
-      .json({ success: true, data: token, msg: "Logged in successfully", status: "ok" });
+      .json({ success: true,userDoc,  data: token, msg: "Logged in successfully", status: "ok" });
   } catch (error) {
     console.error(error);
     return res
