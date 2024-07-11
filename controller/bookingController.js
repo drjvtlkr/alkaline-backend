@@ -2,8 +2,6 @@ import asyncHandler from "express-async-handler";
 import Customer from "../schema/CustomerSchema.js";
 import Booking from "../schema/BookingSchema.js";
 import Product from "../schema/ProductsSchema.js";
-import e from "express";
-import { populate } from "dotenv";
 
 export const initiateBooking = asyncHandler(async (req, res) => {
   try {
@@ -21,12 +19,10 @@ export const initiateBooking = asyncHandler(async (req, res) => {
     for (const product of products) {
       const productDoc = await Product.findById(product.product);
       if (!productDoc) {
-        return res
-          .status(404)
-          .json({
-            msg: `Prodcut not found with id ${product.product}`,
-            success: false,
-          });
+        return res.status(404).json({
+          msg: `Prodcut not found with id ${product.product}`,
+          success: false,
+        });
       }
     }
 
@@ -87,7 +83,14 @@ export const getBookingById = asyncHandler(async (req, res) => {
   try {
     const bookingId = req.params.id;
     const bookingDoc = await Booking.findById(bookingId)
-      .populate("customer")
+      .populate("products")
+      .populate({
+        path: "customer",
+        populate: {
+          path: "user",
+          model: "users",
+        },
+      })
       .exec();
     if (!bookingDoc) {
       return res
@@ -196,13 +199,11 @@ export const getBookingByStatus = asyncHandler(async (req, res) => {
 
     const bookingDoc = await Booking.find({ status: status });
     if (!bookingDoc) {
-      return res
-        .status(404)
-        .json({
-          msg: "Booking with this status not available",
-          success: false,
-          status,
-        });
+      return res.status(404).json({
+        msg: "Booking with this status not available",
+        success: false,
+        status,
+      });
     }
 
     return res.status(200).json({ success: true, bookingDoc });
@@ -231,7 +232,13 @@ export const getBookingByCustomerId = asyncHandler(async (req, res) => {
     const totalPages = Math.ceil(totalDocuments / pageSize);
 
     const booking = await Booking.find({ customer: customerId })
-      .populate("customer")
+    .populate({
+      path: "customer",
+      populate: {
+        path: "user",
+        model: "users",
+      },
+    })
       .populate("products")
       .sort(sort)
       .skip(startIndex)
@@ -307,7 +314,7 @@ export const getAllBookingsBetweenDates = asyncHandler(async (req, res) => {
       .limit(pageSize)
       .exec();
 
-      console.log(bookingDoc)
+    console.log(bookingDoc);
 
     return res.status(200).json({
       bookingDoc,
