@@ -9,34 +9,20 @@ export const initiateBooking = asyncHandler(async (req, res) => {
     const { customerId, bookingDateTime, price, products } = req.body;
 
     const customerDoc = await Customer.findById(customerId);
-    console.log(customerId);
     if (!customerDoc) {
       return res.status(404).json({
         success: false,
-        msg: `customer not found`,
+        msg: `Customer not found`,
       });
     }
 
-    for (const product of products) {
-      const productDoc = await Product.findById(product.product);
-      if (!productDoc) {
-        return res.status(404).json({
-          msg: `Prodcut not found with id ${product.product}`,
-          success: false,
-        });
-      }
-    }
-    console.log(bookingDateTime);
-
+    // No need to fetch product details again, as they are now included in the request
     const bookingDoc = await Booking.create({
       customer: customerId,
       bookingDateTime,
       totalPrice: price,
-      products,
+      products: products,  // This now includes product, name, price, and count
     });
-
-    console.log(bookingDoc.products.product);
-
 
     res.status(201).json({
       msg: "Booking is initiated",
@@ -246,13 +232,13 @@ export const getBookingByCustomerId = asyncHandler(async (req, res) => {
     const totalPages = Math.ceil(totalDocuments / pageSize);
 
     const booking = await Booking.find({ customer: customerId })
-    .populate({
-      path: "customer",
-      populate: {
-        path: "user",
-        model: "users",
-      },
-    })
+      .populate({
+        path: "customer",
+        populate: {
+          path: "user",
+          model: "users",
+        },
+      })
       .populate("products")
       .sort(sort)
       .skip(startIndex)

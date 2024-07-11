@@ -32,7 +32,9 @@ const bookingSchema = mongoose.Schema({
   products: [
     {
       product: { type: mongoose.Schema.Types.ObjectId, ref: "products" },
-      count: { type: Number },
+      name: { type: String, required: true },
+      price: { type: Number, required: true },
+      count: { type: Number, required: true },
     },
   ],
 
