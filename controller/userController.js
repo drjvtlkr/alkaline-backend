@@ -9,7 +9,7 @@ export const login = asyncHandler(async (req, res) => {
     const { phone, password } = req.body;
     const userDoc = await User.findOne({ phone });
     if (!userDoc) {
-      return res.status(404).jsonn({
+      return res.status(404).json({
         success: false,
         msg: `User does not exist with phone number, ${phone}`,
       });

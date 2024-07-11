@@ -7,8 +7,11 @@ const reqstring = {
 
 const paymentSchema = mongoose.Schema({
   paymentId: reqstring,
-  mode: { type: String },
-  enum: ["ONLINE", "OFFLINE"],
+  mode: {
+    type: String,
+    enum: ["ONLINE", "OFFLINE"],
+    required: true,
+  },
 });
 
 const bookingSchema = mongoose.Schema({
@@ -27,13 +30,13 @@ const bookingSchema = mongoose.Schema({
     required: true,
   },
   bookingTime: reqstring,
-  totalPrice: { type: Number },
+  totalPrice: { type: Number, required: true  },
 
   payments: paymentSchema,
 
   status: {
     type: String,
-    enum: ["INITIATED", "PAID", "COMPLETED", "CANCELED"],
+    enum: ["INITIATED", "PAID", "COMPLETED", "CANCELLED"],
     default: "INITIATED",
   },
   createdAt: { type: Date, default: Date.now },

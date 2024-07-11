@@ -4,7 +4,7 @@ import Booking from "../schema/BookingSchema.js";
 
 export const initiateBooking = asyncHandler(async (req, res) => {
   try {
-    const { customerId, bookingDate, bookingTime } = req.body;
+    const { customerId, bookingDate, bookingTime, price } = req.body;
 
     const customerDoc = await Customer.findById(customerId);
     console.log(customerId);
@@ -18,6 +18,7 @@ export const initiateBooking = asyncHandler(async (req, res) => {
       customer: customerId,
       bookingDate,
       bookingTime,
+      totalPrice: price
     });
 
     res.status(201).json({
@@ -37,7 +38,7 @@ export const afterPaymentofBooking = asyncHandler(async (req, res) => {
   const { id } = req.params;
   const { payment, mode } = req.body;
 
-  if (!id || !payment || !mode) {
+  if (!id || !mode) {
     return res.status(400).json({
       message:
         "Booking Id and Payment Details/Id and mode of payment are required",
@@ -47,7 +48,7 @@ export const afterPaymentofBooking = asyncHandler(async (req, res) => {
 
   try {
     const booking = await Booking.findById(id);
-    if (!booking || booking.status != "INITIATED") {
+    if (!booking || booking.status !== "INITIATED") {
       return res.status(404).json({
         message: booking
           ? `Status is invalid ${booking.status}`
@@ -56,14 +57,26 @@ export const afterPaymentofBooking = asyncHandler(async (req, res) => {
         booking,
       });
     }
-    booking.status = "PAID";
+    if (mode === "ONLINE" && !payment) {
+      return res.status(400).json({
+        message: "Payment Id is required for online payments",
+        success: false,
+      });
+    }
+
+    if (mode === "ONLINE") {
+      booking.status = "PAID";
+      booking.payments = { paymentId: payment, mode: mode };
+    } else {
+      const randomPaymentId = Math.floor(1000000000 + Math.random() * 9000000000).toString(); // Random 10-digit number
+      booking.payments = { paymentId: randomPaymentId, mode: mode }; // Handle offline payments
+    }
+
     await booking.save();
     return res.status(200).json({ booking, success: true });
   } catch (error) {
     console.error(error);
-    return res
-      .status(500)
-      .json({ message: "Internal server Error", success: false });
+    return res.status(500).json({ message: "Internal server Error", success: false });
   }
 });
 
