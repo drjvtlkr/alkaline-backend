@@ -1,35 +1,24 @@
 import asyncHandler from "express-async-handler";
 import Customer from "../schema/CustomerSchema.js";
 import Booking from "../schema/BookingSchema.js";
-import Product from "../schema/ProductsSchema.js";
 
 export const initiateBooking = asyncHandler(async (req, res) => {
   try {
-    const { customerId, bookingDateTime, products } = req.body;
+    const { customerId, bookingDateTime, price, products } = req.body;
 
     const customerDoc = await Customer.findById(customerId);
-    console.log(customerId);
     if (!customerDoc) {
       return res.status(404).json({
         success: false,
-        msg: "customer not found",
+        msg: `Customer not found`,
       });
-    }
-
-    for (const product of products) {
-      const productDoc = await Product.findById(product.product);
-      if (!productDoc) {
-        return res.status(404).json({
-          msg: `Prodcut not found with id ${product.product}`,
-          success: false,
-        });
-      }
     }
 
     const bookingDoc = await Booking.create({
       customer: customerId,
       bookingDateTime,
-      products,
+      totalPrice: price,
+      products: products,  
     });
 
     res.status(201).json({
@@ -41,7 +30,7 @@ export const initiateBooking = asyncHandler(async (req, res) => {
     console.error(error);
     return res
       .status(500)
-      .json({ msg: "Internal Server Error", success: false });
+      .json({ msg: `Internal Server Error`, success: false });
   }
 });
 
@@ -68,7 +57,22 @@ export const afterPaymentofBooking = asyncHandler(async (req, res) => {
         booking,
       });
     }
-    booking.status = "PAID";
+
+    if (mode === "ONLINE" && !payment) {
+      return res.status(400).json({
+        message: "Payment Id is required for online payments",
+        success: false,
+      });
+    }
+
+    if (mode === "ONLINE") {
+      booking.status = "PAID";
+      booking.payments = { paymentId: payment, mode: mode };
+    } else {
+      booking.payments = { paymentId: payment, mode: mode };
+      // Handle offline payments
+    }
+
     await booking.save();
     return res.status(200).json({ booking, success: true });
   } catch (error) {
@@ -104,12 +108,12 @@ export const getBookingById = asyncHandler(async (req, res) => {
   }
 });
 
-export const getAllBookings = asyncHandler(async (req, res) => {
+export const getAllBookingsPagination = asyncHandler(async (req, res) => {
   try {
     const page = parseInt(req.query.page) || 1;
     const pageSize = parseInt(req.query.pageSize) || 10;
-    const sortField = req.query.sortField || "id";
-    const sortOrder = req.query.sortOrder || "asc";
+    const sortField = req.query.sortField || "bookingDateTime";
+    const sortOrder = req.query.sortOrder || "desc";
 
     const sort = {};
     sort[sortField] = sortOrder === "asc" ? 1 : -1;
@@ -127,7 +131,13 @@ export const getAllBookings = asyncHandler(async (req, res) => {
       .sort(sort)
       .skip(startIndex)
       .limit(pageSize)
-      .populate("customer")
+      .populate({
+        path: "customer",
+        populate: {
+          path: "user",
+          model: "users",
+        },
+      })
       .exec();
 
     return res.status(200).json({
@@ -211,7 +221,7 @@ export const getBookingByStatus = asyncHandler(async (req, res) => {
     console.error(error);
     return res
       .status(500)
-      .json({ msg: "INternal Server Error", success: false });
+      .json({ msg: "Internal Server Error", success: false });
   }
 });
 
@@ -231,7 +241,7 @@ export const getBookingByCustomerId = asyncHandler(async (req, res) => {
     });
     const totalPages = Math.ceil(totalDocuments / pageSize);
 
-    const booking = await Booking.find({ customer: customerId })
+    const bookingDoc = await Booking.find({ customer: customerId })
     .populate({
       path: "customer",
       populate: {
@@ -246,7 +256,7 @@ export const getBookingByCustomerId = asyncHandler(async (req, res) => {
       .exec();
 
     return res.status(200).json({
-      booking,
+      bookingDoc,
       pagination: {
         page,
         pageSize,

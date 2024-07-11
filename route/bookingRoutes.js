@@ -1,7 +1,7 @@
 import express from "express";
 import {
   afterPaymentofBooking,
-  getAllBookings,
+  getAllBookingsPagination,
   getAllBookingsBetweenDates,
   getBookingById,
   getBookingByStatus,
@@ -15,7 +15,7 @@ const bookingRouter = express.Router();
 
 bookingRouter.route("/initiated").post(initiateBooking);
 bookingRouter.route("/:id/afterPayment").post(afterPaymentofBooking);
-bookingRouter.route("/getAllBookings").get(getAllBookings);
+bookingRouter.route("/getAllBookings").get(getAllBookingsPagination);
 bookingRouter.route("/getBookingById/:id").get(getBookingById);
 bookingRouter.route("/complete/:id").post(markBookingComplete);
 bookingRouter.route("/getBookingByStatus/:status").get(getBookingByStatus)
