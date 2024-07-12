@@ -66,12 +66,11 @@ export const afterPaymentofBooking = asyncHandler(async (req, res) => {
     }
 
     if (mode === "ONLINE") {
-      booking.status = "PAID";
       booking.payments = { paymentId: payment, mode: mode };
     } else {
       booking.payments = { paymentId: payment, mode: mode };
-      // Handle offline payments
     }
+    booking.status = "PAID";
 
     await booking.save();
     return res.status(200).json({ booking, success: true });
@@ -206,14 +205,46 @@ export const markBookingComplete = asyncHandler(async (req, res) => {
 export const getBookingByStatus = asyncHandler(async (req, res) => {
   try {
     const status = req.params.status;
+    const page = parseInt(req.query.page) || 1;
+    const pageSize = parseInt(req.query.pageSize) || 10;
+    const sortField = req.query.sortField || "bookingDateTime";
+    const sortOrder = req.query.sortOrder || "desc";
 
-    const bookingDoc = await Booking.find({ status: status });
+    const sort = {};
+    sort[sortField] = sortOrder === "asc" ? 1 : -1;
+
+    const startIndex = (page - 1) * pageSize;
+
+    const totalDocuments = await Booking.countDocuments({
+      status: { $in: ["PAID", "ASSIGNED", "COMPLETED", "REJECTED"] },
+    });
+    const totalPages = Math.ceil(totalDocuments / pageSize);
+
+    const bookingDoc = await Booking.find({ status: status })
+    .sort(sort)
+    .skip(startIndex)
+    .limit(pageSize)
+    .populate({
+      path: "customer",
+      populate: {
+        path: "user",
+        model: "users",
+      },
+    })
+    .exec();
     if (!bookingDoc) {
       return res.status(404).json({
         msg: "Booking with this status not available",
         success: false,
         status,
       });
+    }
+
+    if (!bookingDoc || bookingDoc.length === 0) {
+      console.log(`Booking data fetched successfully, but nothing to return for status : ${status}`);
+      return res.status(204).json({
+        msg : `Booking data fetched successfully, but nothing to return for status : ${status}`
+      })
     }
 
     return res.status(200).json({ success: true, bookingDoc });
@@ -301,12 +332,12 @@ export const getAllBookingsBetweenDates = asyncHandler(async (req, res) => {
     }
     end.setHours(23, 59, 59, 999);
     const totalDocuments = await Booking.countDocuments({
-      bookingDate: { $gte: start, $lte: end },
+      bookingDateTime: { $gte: start, $lte: end },
     });
     const totalPages = Math.ceil(totalDocuments / pageSize);
 
     let bookingDoc = await Booking.find({
-      bookingDate: {
+      bookingDateTime: {
         $gte: start,
         $lte: end,
       },
@@ -323,8 +354,6 @@ export const getAllBookingsBetweenDates = asyncHandler(async (req, res) => {
       .skip(startIndex)
       .limit(pageSize)
       .exec();
-
-    console.log(bookingDoc);
 
     return res.status(200).json({
       bookingDoc,
