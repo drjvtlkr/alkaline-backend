@@ -101,7 +101,7 @@ export const getAllUsers = asyncHandler(async (req, res) => {
   try {
     const page = parseInt(req.query.page) || 1;
     const pageSize = parseInt(req.query.pageSize) || 10;
-    const sortField = req.query.sortField || "id";
+    const sortField = req.query.sortField || "username";
     const sortOrder = req.query.sortOrder || "asc";
     const sort = {};
     sort[sortField] = sortOrder === "asc" ? 1 : -1;
