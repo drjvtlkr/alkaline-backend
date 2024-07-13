@@ -8,7 +8,8 @@ import {
   getBookingByCustomerId,
   initiateBooking,
   markBookingComplete,
-  markPaymentCompletedOfBooking
+  markPaymentCompletedOfBooking,
+  getBookingsForDate
 } from "../controller/bookingController.js";
 
 
@@ -23,5 +24,6 @@ bookingRouter.route("/updatePaymentIdForCompletedBooking/:id").post(markPaymentC
 bookingRouter.route("/getBookingByStatus/:status").get(getBookingByStatus)
 bookingRouter.route("/getBookingByCustomer/:id").get(getBookingByCustomerId)//this has pagination
 bookingRouter.route("/getAllBookingsBetweenDatesPagination").get(getAllBookingsBetweenDates);
+bookingRouter.route("/getBookingForDate").get(getBookingsForDate)
 
 export default bookingRouter;

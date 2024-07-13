@@ -346,6 +346,74 @@ export const getBookingByCustomerId = asyncHandler(async (req, res) => {
   }
 });
 
+export const getBookingsForDate = asyncHandler(async (req, res) => {
+  try {
+    const date = req.query.date;
+    const page = parseInt(req.query.page) || 1;
+    const pageSize = parseInt(req.query.pageSize) || 10;
+    const sortField = req.query.sortField || "bookingDateTime";
+    const sortOrder = req.query.sortOrder || "desc";
+    const sort = {};
+    sort[sortField] = sortOrder === "desc" ? 1 : -1;
+    const startIndex = (page - 1) * pageSize;
+
+    if (!date) {
+      return res.status(400).json({
+        success: false,
+        message: "Date is required",
+      });
+    }
+
+    const targetDate = new Date(date);
+    if (isNaN(targetDate.getTime())) {
+      return res.status(400).json({ success: false, message: "Invalid date format" });
+    }
+
+    const start = new Date(targetDate.setHours(0, 0, 0, 0));
+    const end = new Date(targetDate.setHours(23, 59, 59, 999));
+
+    const totalDocuments = await Booking.countDocuments({
+      bookingDateTime: { $gte: start, $lte: end },
+    });
+    const totalPages = Math.ceil(totalDocuments / pageSize);
+
+    const bookingDoc = await Booking.find({
+      bookingDateTime: {
+        $gte: start,
+        $lte: end,
+      },
+    })
+      .populate("products")
+      .populate({
+        path: "customer",
+        populate: {
+          path: "user",
+          model: "users",
+        },
+      })
+      .sort(sort)
+      .skip(startIndex)
+      .limit(pageSize)
+      .exec();
+
+    return res.status(200).json({
+      bookingDoc,
+      pagination: {
+        page,
+        pageSize,
+        totalPages,
+        totalDocuments,
+        hasNextPage: page < totalPages,
+        hasPrevPage: page > 1,
+      },
+      success: true,
+    });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ success: false, error });
+  }
+});
+
 export const getAllBookingsBetweenDates = asyncHandler(async (req, res) => {
   try {
     const startDate = req.query.startDate;

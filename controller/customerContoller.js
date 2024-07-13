@@ -108,6 +108,10 @@ export const getAllCustomers = asyncHandler(async (req, res) => {
     const totalPages = Math.ceil(totalDocuments / pageSize);
 
     const customerDoc = await Customer.find({})
+      .populate({
+        path: "user",
+        model: "users",
+      })
       .sort(sort)
       .skip(startIndex)
       .limit(pageSize)
@@ -145,5 +149,97 @@ export const getCustomerById = asyncHandler(async (req, res) => {
   } catch (error) {
     console.error(error);
     return res.status(500).json({ success: false, error });
+  }
+});
+
+export const seachCustomerByNameOrPhone = asyncHandler(async (req, res) => {
+  try {
+    const query = req.query.query;
+    const regexPattern = new RegExp(query, "i");
+
+    const customers = await Customer.aggregate([
+      {
+        $lookup: {
+          from: "users",
+          localField: "user",
+          foreignField: "_id",
+          as: "user",
+        },
+      },
+      {
+        $unwind: "$user",
+      },
+      {
+        $match: {
+          $or: [
+            { "user.phone": { $regex: regexPattern } },
+            { "user.username": { $regex: regexPattern } },
+            { firstName: { $regex: regexPattern } },
+            { lastName: { $regex: regexPattern } },
+          ],
+        },
+      },
+      {
+        $project: {
+          firstName: 1,
+          lastName: 1,
+          gender: 1,
+          shopName: 1,
+          shopNumber: 1,
+          shopAddress: 1,
+          pincode: 1,
+          landmark: 1,
+          dateCreated: 1,
+          dateModified: 1,
+          user: {
+            _id: 1,
+            username: 1,
+            phone: 1,
+            userStatus: 1,
+            role: 1,
+            dateCreated: 1,
+            dateModified: 1,
+          },
+        },
+      },
+    ]);
+    if (customers.length === 0) {
+      return res.status(404).json({
+        msg: `No data available for the searchQuery ${query}`,
+        success: false,
+      });
+    }
+
+    return res.status(200).json({ success: true, customers });
+  } catch (error) {
+    console.error(error);
+    return res
+      .status(500)
+      .json({ success: false, error: "Internal Server Error" });
+  }
+});
+
+export const deleteCustomer = asyncHandler(async (req, res) => {
+  try {
+    const id = req.params.id;
+    const customerDoc = await Customer.findByIdAndDelete(id);
+    if (!customerDoc || customerDoc.length === 0) {
+      return res.status(404).json({
+        msg: `customer with ${id} not found, either deleted already or they do not exist`,
+        success: false,
+      });
+    }
+    const userId = customerDoc.user;
+    await Customer.findByIdAndDelete(id);
+    await User.findByIdAndDelete(userId);
+    return res.status(200).json({
+      success: true,
+      msg: `Customer with id ${id} and userId ${userId} deleted successfully`,
+    });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({
+      msg: "Internal Server Error",
+    });
   }
 });
