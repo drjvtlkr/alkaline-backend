@@ -73,6 +73,7 @@ export const updateCustomer = asyncHandler(async (req, res) => {
     customerDoc = await Customer.updateOne({
       firstName,
       lastName,
+      gender,
       phone,
       shopName,
       shopNumber,
