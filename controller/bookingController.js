@@ -66,13 +66,15 @@ export const afterPaymentofBooking = asyncHandler(async (req, res) => {
     }
 
     if (mode === "ONLINE") {
+      booking.status = "PAID";
       booking.payments = { paymentId: payment, mode: mode };
-    } else {
+    } else if(mode === "OFFLINE") {
+      booking.status= "CASH_ON_DELIVERY"
       booking.payments = { paymentId: payment, mode: mode };
     }
-    booking.status = "PAID";
 
     await booking.save();
+    console.log(booking);
     return res.status(200).json({ booking, success: true });
   } catch (error) {
     console.error(error);
@@ -178,13 +180,14 @@ export const markBookingComplete = asyncHandler(async (req, res) => {
       });
     }
 
-    if (bookingDoc.status !== "PAID") {
+    if (bookingDoc.status !== "PAID" && bookingDoc.status !== "CASH_ON_DELIVERY") {
       return res.status(400).json({
         message: `Status is invalid ${bookingDoc.status}`,
         success: false,
         bookingId,
       });
     }
+    
 
     bookingDoc.status = "COMPLETED";
     await bookingDoc.save();
@@ -201,6 +204,45 @@ export const markBookingComplete = asyncHandler(async (req, res) => {
       .json({ success: false, msg: "Internal Server Error" });
   }
 });
+
+export const markPaymentCompletedOfBooking = asyncHandler(async(req, res)=>{
+  try {
+    const bookingId = req.params.id;
+    const {paymentId} = req.body
+    const bookingDoc =  await Booking.findById(bookingId)
+
+    if (!bookingDoc) {
+      return res.status(404).json({
+        message: ` Booking ID not found ${bookingId}`,
+        success: false,
+        bookingId,
+      });
+    }
+
+    if (!bookingDoc.status){
+      return res.status(400).json({
+        message: `Invalid Booking Status`,
+        success: false,
+        bookingDoc
+      })
+    } else if (bookingDoc.status){
+      if(bookingDoc.payments.paymentId === "CASH_ON_DELIVERY"){
+        bookingDoc.payments.paymentId = paymentId;
+         await bookingDoc.save()
+
+         return res.status(200).json({
+          message: `Payment id updated for bookig ${bookingId}`,
+          success:true,
+          bookingDoc
+         })
+      }
+    }
+    
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({msg: `Internal server Error`, success: false})
+  }
+})
 
 export const getBookingByStatus = asyncHandler(async (req, res) => {
   try {
