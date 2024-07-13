@@ -115,7 +115,7 @@ export const getAllBookingsPagination = asyncHandler(async (req, res) => {
     const sortOrder = req.query.sortOrder || "desc";
 
     const sort = {};
-    sort[sortField] = sortOrder === "asc" ? 1 : -1;
+    sort[sortField] = sortOrder === "desc" ? 1 : -1;
 
     const startIndex = (page - 1) * pageSize;
 
@@ -211,7 +211,7 @@ export const getBookingByStatus = asyncHandler(async (req, res) => {
     const sortOrder = req.query.sortOrder || "desc";
 
     const sort = {};
-    sort[sortField] = sortOrder === "asc" ? 1 : -1;
+    sort[sortField] = sortOrder === "desc" ? 1 : -1;
 
     const startIndex = (page - 1) * pageSize;
 
@@ -261,11 +261,11 @@ export const getBookingByCustomerId = asyncHandler(async (req, res) => {
     const customerId = req.params.id;
     const page = parseInt(req.query.page) || 1;
     const pageSize = parseInt(req.query.pageSize) || 10;
-    const sortField = req.query.sortField || "id";
+    const sortField = req.query.sortField || "bookingDateTime";
     const sortOrder = req.query.sortOrder || "desc";
 
     const sort = {};
-    sort[sortField] = sortOrder === "asc" ? 1 : -1;
+    sort[sortField] = sortOrder === "desc" ? 1 : -1;
     const startIndex = (page - 1) * pageSize;
     const totalDocuments = await Booking.countDocuments({
       customer: customerId,
@@ -310,10 +310,10 @@ export const getAllBookingsBetweenDates = asyncHandler(async (req, res) => {
     const endDate = req.query.endDate;
     const page = parseInt(req.query.page) || 1;
     const pageSize = parseInt(req.query.pageSize) || 10;
-    const sortField = req.query.sortField || "name";
-    const sortOrder = req.query.sortOrder || "asc";
+    const sortField = req.query.sortField || "bookingDateTime";
+    const sortOrder = req.query.sortOrder || "desc";
     const sort = {};
-    sort[sortField] = sortOrder === "asc" ? 1 : -1;
+    sort[sortField] = sortOrder === "desc" ? 1 : -1;
     const startIndex = (page - 1) * pageSize;
 
     if (!startDate || !endDate) {
