@@ -51,8 +51,8 @@ export const registerCustomer = asyncHandler(async (req, res) => {
 
 export const updateCustomer = asyncHandler(async (req, res) => {
   try {
-    const id = req.params.id;
     const {
+      customerId,
       firstName,
       lastName,
       shopName,
@@ -62,35 +62,46 @@ export const updateCustomer = asyncHandler(async (req, res) => {
       pincode,
       landmark,
     } = req.body;
-    let customerDoc;
-    customerDoc = await Customer.findById(id);
+    const customerDoc = await Customer.findById(customerId);
     if (!customerDoc) {
       return res
         .status(404)
         .json({ success: false, msg: "Customer not found" });
     }
 
-    customerDoc = await Customer.updateOne({
-      firstName,
-      lastName,
-      phone,
-      shopName,
-      shopNumber,
-      shopAddress,
-      pincode,
-      landmark,
-    });
+    await Customer.updateOne(
+      { _id: customerId },
+      {
+        firstName,
+        lastName,
+        shopName,
+        shopNumber,
+        shopAddress,
+        phone,
+        pincode,
+        landmark,
+      },
+      { new: true }
+    );
+    await User.updateOne(
+      { _id: customerDoc.user },
+      {
+        username: `${firstName}${lastName}`,
+        phone,
+      },
+      { new: true }
+    );
 
     return res.status(200).json({
       success: true,
-      msg: `Customer with id ${id} updated successfully`,
+      msg: `Customer with id ${customerId} updated successfully`,
       customerDoc,
     });
   } catch (error) {
     console.error(error);
     return res
       .status(500)
-      .json({ suucess: false, msg: "could not update the customer" });
+      .json({ success: false, msg: "Could not update the customer" });
   }
 });
 
