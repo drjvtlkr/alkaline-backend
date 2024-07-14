@@ -138,7 +138,10 @@ export const getAllCustomers = asyncHandler(async (req, res) => {
 export const getCustomerById = asyncHandler(async (req, res) => {
   try {
     const id = req.params.id;
-    const customerDoc = await Customer.findById(id);
+    const customerDoc = await Customer.findById(id).populate({
+      path: "user",
+      model: "users",
+    });
     if (!customerDoc) {
       return res.status(404).json({
         success: false,
