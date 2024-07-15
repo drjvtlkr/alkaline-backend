@@ -1,8 +1,6 @@
 import asyncHandler from "express-async-handler";
 import Customer from "../schema/CustomerSchema.js";
 import Booking from "../schema/BookingSchema.js";
-import Product from "../schema/ProductsSchema.js";
-import moment from "moment-timezone";
 
 export const initiateBooking = asyncHandler(async (req, res) => {
   try {
@@ -16,12 +14,11 @@ export const initiateBooking = asyncHandler(async (req, res) => {
       });
     }
 
-    // No need to fetch product details again, as they are now included in the request
     const bookingDoc = await Booking.create({
       customer: customerId,
       bookingDateTime,
       totalPrice: price,
-      products: products,  // This now includes product, name, price, and count
+      products: products,
     });
 
     res.status(201).json({
@@ -41,7 +38,7 @@ export const afterPaymentofBooking = asyncHandler(async (req, res) => {
   const { id } = req.params;
   const { payment, mode } = req.body;
 
-  if (!id || !mode) {
+  if (!id || !payment || !mode) {
     return res.status(400).json({
       message:
         "Booking Id and Payment Details/Id and mode of payment are required",
@@ -51,7 +48,7 @@ export const afterPaymentofBooking = asyncHandler(async (req, res) => {
 
   try {
     const booking = await Booking.findById(id);
-    if (!booking || booking.status !== "INITIATED") {
+    if (!booking || booking.status != "INITIATED") {
       return res.status(404).json({
         message: booking
           ? `Status is invalid ${booking.status}`
@@ -60,6 +57,7 @@ export const afterPaymentofBooking = asyncHandler(async (req, res) => {
         booking,
       });
     }
+
     if (mode === "ONLINE" && !payment) {
       return res.status(400).json({
         message: "Payment Id is required for online payments",
@@ -70,37 +68,19 @@ export const afterPaymentofBooking = asyncHandler(async (req, res) => {
     if (mode === "ONLINE") {
       booking.status = "PAID";
       booking.payments = { paymentId: payment, mode: mode };
-    } else {
-      // const randomPaymentId = Math.floor(1000000000 + Math.random() * 9000000000).toString(); // Random 10-digit number
+    } else if (mode === "OFFLINE") {
+      booking.status = "CASH_ON_DELIVERY";
       booking.payments = { paymentId: payment, mode: mode };
-      // Handle offline payments
     }
 
     await booking.save();
+    console.log(booking);
     return res.status(200).json({ booking, success: true });
   } catch (error) {
     console.error(error);
     return res
       .status(500)
       .json({ message: "Internal server Error", success: false });
-  }
-});
-
-export const getBookingById = asyncHandler(async (req, res) => {
-  try {
-    const bookingId = req.params.id;
-    const bookingDoc = await Booking.findById(bookingId)
-      .populate("customer")
-      .exec();
-    if (!bookingDoc) {
-      return res
-        .status(404)
-        .json({ msg: `Booking Id Not Found ${bookingId}`, success: false });
-    }
-    return res.status(200).json({ bookingDoc, success: true });
-  } catch (error) {
-    console.log(error);
-    return res.status(500).json({ error, success: false });
   }
 });
 
@@ -117,17 +97,100 @@ export const getAllBookings = asyncHandler(async (req, res) => {
     const startIndex = (page - 1) * pageSize;
 
     const totalDocuments = await Booking.countDocuments({
-      status: { $in: ["PAID", "ASSIGNED", "COMPLETED", "REJECTED"] },
+      status: {
+        $in: ["PAID", "ASSIGNED", "COMPLETED", "REJECTED", "CASH_ON_DELIVERY"],
+      },
     });
     const totalPages = Math.ceil(totalDocuments / pageSize);
 
     const bookings = await Booking.find({
-      status: { $in: ["PAID", "ASSIGNED", "COMPLETED", "REJECTED"] },
+      status: {
+        $in: ["PAID", "ASSIGNED", "COMPLETED", "REJECTED", "CASH_ON_DELIVERY"],
+      },
     })
       .sort(sort)
       .skip(startIndex)
       .limit(pageSize)
       .populate("customer")
+      .exec();
+
+    return res.status(200).json({
+      bookings,
+      pagination: {
+        page,
+        pageSize,
+        totalPages,
+        totalDocuments,
+        hasNextPage: page < totalPages,
+        hasPrevPage: page > 1,
+      },
+      success: true,
+    });
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json({ error, success: false });
+  }
+});
+
+export const getBookingById = asyncHandler(async (req, res) => {
+  try {
+    const bookingId = req.params.id;
+    const bookingDoc = await Booking.findById(bookingId)
+      .populate("products")
+      .populate({
+        path: "customer",
+        populate: {
+          path: "user",
+          model: "users",
+        },
+      })
+      .exec();
+    if (!bookingDoc) {
+      return res
+        .status(404)
+        .json({ msg: `Booking Id Not Found ${bookingId}`, success: false });
+    }
+    return res.status(200).json({ bookingDoc, success: true });
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json({ error, success: false });
+  }
+});
+
+export const getAllBookingsPagination = asyncHandler(async (req, res) => {
+  try {
+    const page = parseInt(req.query.page) || 1;
+    const pageSize = parseInt(req.query.pageSize) || 10;
+    const sortField = req.query.sortField || "bookingDateTime";
+    const sortOrder = req.query.sortOrder || "desc";
+
+    const sort = {};
+    sort[sortField] = sortOrder === "desc" ? 1 : -1;
+
+    const startIndex = (page - 1) * pageSize;
+
+    const totalDocuments = await Booking.countDocuments({
+      status: {
+        $in: ["PAID", "ASSIGNED", "COMPLETED", "REJECTED", "CASH_ON_DELIVERY"],
+      },
+    });
+    const totalPages = Math.ceil(totalDocuments / pageSize);
+
+    const bookings = await Booking.find({
+      status: {
+        $in: ["PAID", "ASSIGNED", "COMPLETED", "REJECTED", "CASH_ON_DELIVERY"],
+      },
+    })
+      .sort(sort)
+      .skip(startIndex)
+      .limit(pageSize)
+      .populate({
+        path: "customer",
+        populate: {
+          path: "user",
+          model: "users",
+        },
+      })
       .exec();
 
     return res.status(200).json({
@@ -155,7 +218,7 @@ export const markBookingComplete = asyncHandler(async (req, res) => {
 
     if (!bookingDoc) {
       return res.status(404).json({
-        message: `Booking ID not found ${bookingId}`,
+        message: ` Booking ID not found ${bookingId}`,
         success: false,
         bookingId,
       });
@@ -163,13 +226,16 @@ export const markBookingComplete = asyncHandler(async (req, res) => {
 
     if (bookingDoc.status === "COMPLETED") {
       return res.status(400).json({
-        message: `Booking is already completed`,
+        message: "Booking is already completed",
         success: false,
         bookingId,
       });
     }
 
-    if (bookingDoc.status !== "PAID") {
+    if (
+      bookingDoc.status !== "PAID" &&
+      bookingDoc.status !== "CASH_ON_DELIVERY"
+    ) {
       return res.status(400).json({
         message: `Status is invalid ${bookingDoc.status}`,
         success: false,
@@ -193,11 +259,78 @@ export const markBookingComplete = asyncHandler(async (req, res) => {
   }
 });
 
+export const markPaymentCompletedOfBooking = asyncHandler(async (req, res) => {
+  try {
+    const bookingId = req.params.id;
+    const { paymentId } = req.body;
+    const bookingDoc = await Booking.findById(bookingId);
+
+    if (!bookingDoc) {
+      return res.status(404).json({
+        message: ` Booking ID not found ${bookingId}`,
+        success: false,
+        bookingId,
+      });
+    }
+
+    if (!bookingDoc.status) {
+      return res.status(400).json({
+        message: `Invalid Booking Status`,
+        success: false,
+        bookingDoc,
+      });
+    } else if (bookingDoc.status) {
+      if (bookingDoc.payments.paymentId === "CASH_ON_DELIVERY") {
+        bookingDoc.payments.paymentId = paymentId;
+        await bookingDoc.save();
+
+        return res.status(200).json({
+          message: `Payment id updated for bookig ${bookingId}`,
+          success: true,
+          bookingDoc,
+        });
+      }
+    }
+  } catch (error) {
+    console.error(error);
+    return res
+      .status(500)
+      .json({ msg: `Internal server Error`, success: false });
+  }
+});
+
 export const getBookingByStatus = asyncHandler(async (req, res) => {
   try {
     const status = req.params.status;
+    const page = parseInt(req.query.page) || 1;
+    const pageSize = parseInt(req.query.pageSize) || 10;
+    const sortField = req.query.sortField || "bookingDateTime";
+    const sortOrder = req.query.sortOrder || "desc";
 
-    const bookingDoc = await Booking.find({ status: status });
+    const sort = {};
+    sort[sortField] = sortOrder === "desc" ? 1 : -1;
+
+    const startIndex = (page - 1) * pageSize;
+
+    const totalDocuments = await Booking.countDocuments({
+      status: {
+        $in: ["PAID", "ASSIGNED", "COMPLETED", "REJECTED", "CASH_ON_DELIVERY"],
+      },
+    });
+    const totalPages = Math.ceil(totalDocuments / pageSize);
+
+    const bookingDoc = await Booking.find({ status: status })
+      .sort(sort)
+      .skip(startIndex)
+      .limit(pageSize)
+      .populate({
+        path: "customer",
+        populate: {
+          path: "user",
+          model: "users",
+        },
+      })
+      .exec();
     if (!bookingDoc) {
       return res.status(404).json({
         msg: "Booking with this status not available",
@@ -206,12 +339,21 @@ export const getBookingByStatus = asyncHandler(async (req, res) => {
       });
     }
 
+    if (!bookingDoc || bookingDoc.length === 0) {
+      console.log(
+        `Booking data fetched successfully, but nothing to return for status : ${status}`
+      );
+      return res.status(204).json({
+        msg: `Booking data fetched successfully, but nothing to return for status : ${status}`,
+      });
+    }
+
     return res.status(200).json({ success: true, bookingDoc });
   } catch (error) {
     console.error(error);
     return res
       .status(500)
-      .json({ msg: "INternal Server Error", success: false });
+      .json({ msg: "Internal Server Error", success: false });
   }
 });
 
@@ -220,18 +362,18 @@ export const getBookingByCustomerId = asyncHandler(async (req, res) => {
     const customerId = req.params.id;
     const page = parseInt(req.query.page) || 1;
     const pageSize = parseInt(req.query.pageSize) || 10;
-    const sortField = req.query.sortField || "id";
+    const sortField = req.query.sortField || "bookingDateTime";
     const sortOrder = req.query.sortOrder || "desc";
 
     const sort = {};
-    sort[sortField] = sortOrder === "asc" ? 1 : -1;
+    sort[sortField] = sortOrder === "desc" ? 1 : -1;
     const startIndex = (page - 1) * pageSize;
     const totalDocuments = await Booking.countDocuments({
       customer: customerId,
     });
     const totalPages = Math.ceil(totalDocuments / pageSize);
 
-    const booking = await Booking.find({ customer: customerId })
+    const bookingDoc = await Booking.find({ customer: customerId })
       .populate({
         path: "customer",
         populate: {
@@ -246,7 +388,7 @@ export const getBookingByCustomerId = asyncHandler(async (req, res) => {
       .exec();
 
     return res.status(200).json({
-      booking,
+      bookingDoc,
       pagination: {
         page,
         pageSize,
@@ -263,16 +405,86 @@ export const getBookingByCustomerId = asyncHandler(async (req, res) => {
   }
 });
 
+export const getBookingsForDate = asyncHandler(async (req, res) => {
+  try {
+    const date = req.query.date;
+    const page = parseInt(req.query.page) || 1;
+    const pageSize = parseInt(req.query.pageSize) || 10;
+    const sortField = req.query.sortField || "bookingDateTime";
+    const sortOrder = req.query.sortOrder || "desc";
+    const sort = {};
+    sort[sortField] = sortOrder === "desc" ? 1 : -1;
+    const startIndex = (page - 1) * pageSize;
+
+    if (!date) {
+      return res.status(400).json({
+        success: false,
+        message: "Date is required",
+      });
+    }
+
+    const targetDate = new Date(date);
+    if (isNaN(targetDate.getTime())) {
+      return res
+        .status(400)
+        .json({ success: false, message: "Invalid date format" });
+    }
+
+    const start = new Date(targetDate.setHours(0, 0, 0, 0));
+    const end = new Date(targetDate.setHours(23, 59, 59, 999));
+
+    const totalDocuments = await Booking.countDocuments({
+      bookingDateTime: { $gte: start, $lte: end },
+    });
+    const totalPages = Math.ceil(totalDocuments / pageSize);
+
+    const bookingDoc = await Booking.find({
+      bookingDateTime: {
+        $gte: start,
+        $lte: end,
+      },
+    })
+      .populate("products")
+      .populate({
+        path: "customer",
+        populate: {
+          path: "user",
+          model: "users",
+        },
+      })
+      .sort(sort)
+      .skip(startIndex)
+      .limit(pageSize)
+      .exec();
+
+    return res.status(200).json({
+      bookingDoc,
+      pagination: {
+        page,
+        pageSize,
+        totalPages,
+        totalDocuments,
+        hasNextPage: page < totalPages,
+        hasPrevPage: page > 1,
+      },
+      success: true,
+    });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ success: false, error });
+  }
+});
+
 export const getAllBookingsBetweenDates = asyncHandler(async (req, res) => {
   try {
     const startDate = req.query.startDate;
     const endDate = req.query.endDate;
     const page = parseInt(req.query.page) || 1;
     const pageSize = parseInt(req.query.pageSize) || 10;
-    const sortField = req.query.sortField || "name";
-    const sortOrder = req.query.sortOrder || "asc";
+    const sortField = req.query.sortField || "bookingDateTime";
+    const sortOrder = req.query.sortOrder || "desc";
     const sort = {};
-    sort[sortField] = sortOrder === "asc" ? 1 : -1;
+    sort[sortField] = sortOrder === "desc" ? 1 : -1;
     const startIndex = (page - 1) * pageSize;
 
     if (!startDate || !endDate) {
@@ -291,12 +503,12 @@ export const getAllBookingsBetweenDates = asyncHandler(async (req, res) => {
     }
     end.setHours(23, 59, 59, 999);
     const totalDocuments = await Booking.countDocuments({
-      bookingDate: { $gte: start, $lte: end },
+      bookingDateTime: { $gte: start, $lte: end },
     });
     const totalPages = Math.ceil(totalDocuments / pageSize);
 
     let bookingDoc = await Booking.find({
-      bookingDate: {
+      bookingDateTime: {
         $gte: start,
         $lte: end,
       },
@@ -314,8 +526,6 @@ export const getAllBookingsBetweenDates = asyncHandler(async (req, res) => {
       .limit(pageSize)
       .exec();
 
-    console.log(bookingDoc);
-
     return res.status(200).json({
       bookingDoc,
       pagination: {
@@ -328,7 +538,7 @@ export const getAllBookingsBetweenDates = asyncHandler(async (req, res) => {
       },
       success: true,
     });
-  } catch (error) {
+  } catch (error){
     console.error(error);
     return res.status(500).json({ success: false, error });
   }
