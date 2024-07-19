@@ -26,7 +26,7 @@ export const login = asyncHandler(async (req, res) => {
 
     return res
       .status(200)
-      .json({ success: true, data: token, msg: "Logged in successfully", status: "ok" });
+      .json({ success: true, data: token, msg: "Logged in successfully", status: "ok", userDoc});
   } catch (error) {
     console.error(error);
     return res
@@ -134,3 +134,24 @@ export const getAllUsers = asyncHandler(async (req, res) => {
     return res.status(500).json({ success: false, error });
   }
 });
+
+export const deleteUser =  asyncHandler(async(req, res)=>{
+  try {
+    const id = req.params.id;
+    const userDoc= await User.findByIdAndDelete(id);
+    if(!userDoc || userDoc.length === 0){
+      return res.status(404).json({
+        msg : `Could not delete or find the user by id ${id}`,
+        success: false
+      })
+    }
+
+     return res.status(200).json({
+      msg: `Deleted user by id ${id} successfully`,
+      success:true
+     })
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({msg: "Internal Server Error", success: false})
+  }
+})

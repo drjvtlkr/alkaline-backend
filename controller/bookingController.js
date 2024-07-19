@@ -66,13 +66,15 @@ export const afterPaymentofBooking = asyncHandler(async (req, res) => {
     }
 
     if (mode === "ONLINE") {
+      booking.status = "PAID";
       booking.payments = { paymentId: payment, mode: mode };
-    } else {
+    } else if(mode === "OFFLINE") {
+      booking.status= "CASH_ON_DELIVERY"
       booking.payments = { paymentId: payment, mode: mode };
     }
-    booking.status = "PAID";
 
     await booking.save();
+    console.log(booking);
     return res.status(200).json({ booking, success: true });
   } catch (error) {
     console.error(error);
@@ -115,7 +117,7 @@ export const getAllBookingsPagination = asyncHandler(async (req, res) => {
     const sortOrder = req.query.sortOrder || "desc";
 
     const sort = {};
-    sort[sortField] = sortOrder === "asc" ? 1 : -1;
+    sort[sortField] = sortOrder === "desc" ? 1 : -1;
 
     const startIndex = (page - 1) * pageSize;
 
@@ -178,13 +180,14 @@ export const markBookingComplete = asyncHandler(async (req, res) => {
       });
     }
 
-    if (bookingDoc.status !== "PAID") {
+    if (bookingDoc.status !== "PAID" && bookingDoc.status !== "CASH_ON_DELIVERY") {
       return res.status(400).json({
         message: `Status is invalid ${bookingDoc.status}`,
         success: false,
         bookingId,
       });
     }
+    
 
     bookingDoc.status = "COMPLETED";
     await bookingDoc.save();
@@ -202,6 +205,45 @@ export const markBookingComplete = asyncHandler(async (req, res) => {
   }
 });
 
+export const markPaymentCompletedOfBooking = asyncHandler(async(req, res)=>{
+  try {
+    const bookingId = req.params.id;
+    const {paymentId} = req.body
+    const bookingDoc =  await Booking.findById(bookingId)
+
+    if (!bookingDoc) {
+      return res.status(404).json({
+        message: ` Booking ID not found ${bookingId}`,
+        success: false,
+        bookingId,
+      });
+    }
+
+    if (!bookingDoc.status){
+      return res.status(400).json({
+        message: `Invalid Booking Status`,
+        success: false,
+        bookingDoc
+      })
+    } else if (bookingDoc.status){
+      if(bookingDoc.payments.paymentId === "CASH_ON_DELIVERY"){
+        bookingDoc.payments.paymentId = paymentId;
+         await bookingDoc.save()
+
+         return res.status(200).json({
+          message: `Payment id updated for bookig ${bookingId}`,
+          success:true,
+          bookingDoc
+         })
+      }
+    }
+    
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({msg: `Internal server Error`, success: false})
+  }
+})
+
 export const getBookingByStatus = asyncHandler(async (req, res) => {
   try {
     const status = req.params.status;
@@ -211,7 +253,7 @@ export const getBookingByStatus = asyncHandler(async (req, res) => {
     const sortOrder = req.query.sortOrder || "desc";
 
     const sort = {};
-    sort[sortField] = sortOrder === "asc" ? 1 : -1;
+    sort[sortField] = sortOrder === "desc" ? 1 : -1;
 
     const startIndex = (page - 1) * pageSize;
 
@@ -261,11 +303,11 @@ export const getBookingByCustomerId = asyncHandler(async (req, res) => {
     const customerId = req.params.id;
     const page = parseInt(req.query.page) || 1;
     const pageSize = parseInt(req.query.pageSize) || 10;
-    const sortField = req.query.sortField || "id";
+    const sortField = req.query.sortField || "bookingDateTime";
     const sortOrder = req.query.sortOrder || "desc";
 
     const sort = {};
-    sort[sortField] = sortOrder === "asc" ? 1 : -1;
+    sort[sortField] = sortOrder === "desc" ? 1 : -1;
     const startIndex = (page - 1) * pageSize;
     const totalDocuments = await Booking.countDocuments({
       customer: customerId,
@@ -304,16 +346,84 @@ export const getBookingByCustomerId = asyncHandler(async (req, res) => {
   }
 });
 
+export const getBookingsForDate = asyncHandler(async (req, res) => {
+  try {
+    const date = req.query.date;
+    const page = parseInt(req.query.page) || 1;
+    const pageSize = parseInt(req.query.pageSize) || 10;
+    const sortField = req.query.sortField || "bookingDateTime";
+    const sortOrder = req.query.sortOrder || "desc";
+    const sort = {};
+    sort[sortField] = sortOrder === "desc" ? 1 : -1;
+    const startIndex = (page - 1) * pageSize;
+
+    if (!date) {
+      return res.status(400).json({
+        success: false,
+        message: "Date is required",
+      });
+    }
+
+    const targetDate = new Date(date);
+    if (isNaN(targetDate.getTime())) {
+      return res.status(400).json({ success: false, message: "Invalid date format" });
+    }
+
+    const start = new Date(targetDate.setHours(0, 0, 0, 0));
+    const end = new Date(targetDate.setHours(23, 59, 59, 999));
+
+    const totalDocuments = await Booking.countDocuments({
+      bookingDateTime: { $gte: start, $lte: end },
+    });
+    const totalPages = Math.ceil(totalDocuments / pageSize);
+
+    const bookingDoc = await Booking.find({
+      bookingDateTime: {
+        $gte: start,
+        $lte: end,
+      },
+    })
+      .populate("products")
+      .populate({
+        path: "customer",
+        populate: {
+          path: "user",
+          model: "users",
+        },
+      })
+      .sort(sort)
+      .skip(startIndex)
+      .limit(pageSize)
+      .exec();
+
+    return res.status(200).json({
+      bookingDoc,
+      pagination: {
+        page,
+        pageSize,
+        totalPages,
+        totalDocuments,
+        hasNextPage: page < totalPages,
+        hasPrevPage: page > 1,
+      },
+      success: true,
+    });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ success: false, error });
+  }
+});
+
 export const getAllBookingsBetweenDates = asyncHandler(async (req, res) => {
   try {
     const startDate = req.query.startDate;
     const endDate = req.query.endDate;
     const page = parseInt(req.query.page) || 1;
     const pageSize = parseInt(req.query.pageSize) || 10;
-    const sortField = req.query.sortField || "name";
-    const sortOrder = req.query.sortOrder || "asc";
+    const sortField = req.query.sortField || "bookingDateTime";
+    const sortOrder = req.query.sortOrder || "desc";
     const sort = {};
-    sort[sortField] = sortOrder === "asc" ? 1 : -1;
+    sort[sortField] = sortOrder === "desc" ? 1 : -1;
     const startIndex = (page - 1) * pageSize;
 
     if (!startDate || !endDate) {
