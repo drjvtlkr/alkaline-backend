@@ -27,13 +27,12 @@ export const addProduct = asyncHandler(async (req, res) => {
 export const updateProduct = asyncHandler(async (req, res) => {
   try {
     const { name, price, capacity, productDesc, img, productId } = req.body;
-    let productDoc;
-    productDoc = await Product.findById(productId);
+    const productDoc = await Product.findById(productId);
     if (!productDoc) {
       return res.status(404).json({ success: false, msg: "Product Not found" });
     }
 
-    productDoc = await Product.updateOne(
+    await Product.updateOne(
       {
         _id: productId,
       },
@@ -43,12 +42,13 @@ export const updateProduct = asyncHandler(async (req, res) => {
         capacity,
         productDesc,
         img,
-      }
+      },
+      {new: true}
     );
 
     return res.status(200).json({
       success: true,
-      msg: `Product with ID ${id} updated successfully`,
+      msg: `Product with ID ${productId} updated successfully`,
       productDoc,
     });
   } catch (error) {

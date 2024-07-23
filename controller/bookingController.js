@@ -482,3 +482,24 @@ export const getAllBookingsBetweenDates = asyncHandler(async (req, res) => {
     return res.status(500).json({ success: false, error });
   }
 });
+
+export const deleteBookingById =  asyncHandler(async(req, res) =>{
+  try {
+    const id =  req.params.id;
+    const bookingDoc = await Booking.findByIdAndDelete(id);
+
+    if(!bookingDoc){
+      return res.status(404).json({
+        msg: `booking with id ${id} has been deleted already or it does not exist`,
+        success: false
+      })
+    }
+    return res.status(200).json({
+      success: true,
+      msg: `Booking with id ${id} deleted successfully`
+    })
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({msg: "Internal Server Error", success: false})
+  }
+})

@@ -1,6 +1,7 @@
 import asyncHandler from "express-async-handler";
 import User from "../schema/UserSchema.js";
 import Customer from "../schema/CustomerSchema.js";
+import Booking from "../schema/BookingSchema.js";
 
 export const registerCustomer = asyncHandler(async (req, res) => {
   try {
@@ -245,9 +246,10 @@ export const deleteCustomer = asyncHandler(async (req, res) => {
     const userId = customerDoc.user;
     await Customer.findByIdAndDelete(id);
     await User.findByIdAndDelete(userId);
+    await Booking.deleteMany({customer: id});
     return res.status(200).json({
       success: true,
-      msg: `Customer with id ${id} and userId ${userId} deleted successfully`,
+      msg: `Customer with id ${id}, userId ${userId} and all their bookings deleted successfully`,
     });
   } catch (error) {
     console.error(error);
