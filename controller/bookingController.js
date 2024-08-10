@@ -114,7 +114,7 @@ export const getAllBookingsPagination = asyncHandler(async (req, res) => {
     const page = parseInt(req.query.page) || 1;
     const pageSize = parseInt(req.query.pageSize) || 10;
     const sortField = req.query.sortField || "bookingDateTime";
-    const sortOrder = req.query.sortOrder === "desc" ? -1 : 1;
+    const sortOrder = req.query.sortOrder === "asc" ? -1 : 1;
 
     const startIndex = (page - 1) * pageSize;
 
