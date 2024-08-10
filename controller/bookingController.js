@@ -114,22 +114,17 @@ export const getAllBookingsPagination = asyncHandler(async (req, res) => {
     const page = parseInt(req.query.page) || 1;
     const pageSize = parseInt(req.query.pageSize) || 10;
     const sortField = req.query.sortField || "bookingDateTime";
-    const sortOrder = req.query.sortOrder || "desc";
-
-    const sort = {};
-    sort[sortField] = sortOrder === "desc" ? 1 : -1;
+    const sortOrder = req.query.sortOrder === "desc" ? -1 : 1;
 
     const startIndex = (page - 1) * pageSize;
 
-    const totalDocuments = await Booking.countDocuments({
-      status: { $in: ["PAID", "ASSIGNED", "COMPLETED", "REJECTED"] },
-    });
+    const totalDocuments = await Booking.countDocuments();
     const totalPages = Math.ceil(totalDocuments / pageSize);
 
     const bookings = await Booking.find({
       status: { $in: ["PAID", "ASSIGNED", "COMPLETED", "REJECTED"] },
     })
-      .sort(sort)
+      .sort({ [sortField]: sortOrder })
       .skip(startIndex)
       .limit(pageSize)
       .populate({
@@ -154,7 +149,7 @@ export const getAllBookingsPagination = asyncHandler(async (req, res) => {
       success: true,
     });
   } catch (error) {
-    console.log(error);
+    console.error(error);
     return res.status(500).json({ error, success: false });
   }
 });
