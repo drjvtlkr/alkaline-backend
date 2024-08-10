@@ -323,6 +323,13 @@ export const getBookingByCustomerId = asyncHandler(async (req, res) => {
       .limit(pageSize)
       .exec();
 
+      if (bookingDoc.length === 0) {
+        return res.status(404).json({
+          success: false,
+          msg: `Customer not Found`
+        })
+      }
+
     return res.status(200).json({
       bookingDoc,
       pagination: {
