@@ -122,7 +122,7 @@ export const getAllBookingsPagination = asyncHandler(async (req, res) => {
     const totalPages = Math.ceil(totalDocuments / pageSize);
 
     const bookings = await Booking.find({
-      status: { $in: ["PAID", "ASSIGNED", "COMPLETED", "REJECTED"] },
+      status: { $in: ["INITIATED", "PAID", "COMPLETED", "CASH_ON_DELIVERY"] },
     })
       .sort({ [sortField]: sortOrder })
       .skip(startIndex)
