@@ -4,7 +4,7 @@ import Booking from "../schema/BookingSchema.js";
 
 export const initiateBooking = asyncHandler(async (req, res) => {
   try {
-    const { customerId, bookingDateTime, price, products } = req.body;
+    const { customerId, bookingDateTime, price, products, deliveryAddress  } = req.body;
 
     const customerDoc = await Customer.findById(customerId);
     if (!customerDoc) {
@@ -19,6 +19,7 @@ export const initiateBooking = asyncHandler(async (req, res) => {
       bookingDateTime,
       totalPrice: price,
       products: products,  
+      deliveryAddress: deliveryAddress
     });
 
     res.status(201).json({
