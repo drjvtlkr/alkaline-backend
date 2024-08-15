@@ -1,7 +1,7 @@
 import asyncHandler from "express-async-handler";
-import User from "../schema/UserSchema.js";
-import Customer from "../schema/CustomerSchema.js";
-import Booking from "../schema/BookingSchema.js";
+import User from "../models/UserSchema.js";
+import Customer from "../models/CustomerSchema.js";
+import Booking from "../models/BookingSchema.js";
 
 export const registerCustomer = asyncHandler(async (req, res) => {
   try {
@@ -258,3 +258,14 @@ export const deleteCustomer = asyncHandler(async (req, res) => {
     });
   }
 });
+
+export const addAddress = asyncHandler(async(req,res)=>{
+  try {
+    
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({
+      msg: "Internal Server Error"
+    })
+  }
+})

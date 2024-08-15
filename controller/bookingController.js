@@ -1,6 +1,6 @@
 import asyncHandler from "express-async-handler";
-import Customer from "../schema/CustomerSchema.js";
-import Booking from "../schema/BookingSchema.js";
+import Customer from "../models/CustomerSchema.js";
+import Booking from "../models/BookingSchema.js";
 
 export const initiateBooking = asyncHandler(async (req, res) => {
   try {

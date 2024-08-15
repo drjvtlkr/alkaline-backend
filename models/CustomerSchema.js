@@ -1,4 +1,4 @@
-import mongoose from "mongoose";
+import mongoose, { mongo } from "mongoose";
 
 const reqString = {
   type: String,
@@ -11,13 +11,12 @@ const customerSchema = new mongoose.Schema({
   user: { type: mongoose.Schema.Types.ObjectId, ref: "users" },
   dateCreated: { type: Date, default: Date.now },
   dateModified: { type: Date, default: Date.now },
-  shopName: 
-    reqString,
+  shopName: reqString,
   shopNumber: reqString,
-  shopAddress: reqString,
+  shopAddress: { type: mongoose.Schema.Types.ObjectId, ref: "addresses" },
   pincode: {
     type: Number,
-    required: true
+    required: true,
   },
   landmark: {
     type: String,

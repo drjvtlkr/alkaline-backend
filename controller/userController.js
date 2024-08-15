@@ -1,6 +1,6 @@
 import asyncHandler from "express-async-handler";
-import User from "../schema/UserSchema.js";
-import Customer from "../schema/CustomerSchema.js";
+import User from "../models/UserSchema.js";
+import Customer from "../models/CustomerSchema.js";
 import jwt from "jsonwebtoken";
 import dotenv from "dotenv";
 dotenv.config();
@@ -148,7 +148,6 @@ export const getAllAdmins = asyncHandler(async (req, res) => {
     return res.status(500).json({ success: false, msg: "Internal Server Error" });
   }
 });
-
 
 export const deleteUser =  asyncHandler(async(req, res)=>{
   try {
