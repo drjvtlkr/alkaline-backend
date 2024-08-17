@@ -271,28 +271,32 @@ export const addAddress = asyncHandler(async (req, res) => {
   try {
     const customerId = req.params.id;
     const { customer_id, deliveryAddress, pincode, landmark } = req.body;
-    let addressDoc = await Address.findOne({customer_id:customerId});
-    if(!addressDoc){
+    let addressDoc = await Address.findOne({ customer_id: customerId });
+    if (!addressDoc) {
       addressDoc = await Address.create({
-       customer_id: customerId,
-       deliveryAddress,
-       pincode,
-       landmark
-     })
+        customer_id: customerId,
+        deliveryAddress,
+        pincode,
+        landmark,
+      });
     }
     console.log(customerId);
 
     // Find the address document associated with the customer
     // addressDoc = await Address.findOne({ customer_id: customerId });
     console.log(addressDoc);
-    
-    if (addressDoc) {
-      addressDoc.addresses.push({ customer_id, deliveryAddress, pincode, landmark });
-    //   return res
-    //     .status(404)
-    //     .json({ success: false, msg: "Customer not found" });
-    }
 
+    if (addressDoc) {
+      addressDoc.addresses.push({
+        customer_id,
+        deliveryAddress,
+        pincode,
+        landmark,
+      });
+      //   return res
+      //     .status(404)
+      //     .json({ success: false, msg: "Customer not found" });
+    }
 
     await addressDoc.save();
 
@@ -311,13 +315,13 @@ export const addAddress = asyncHandler(async (req, res) => {
 export const getAllAddressForCustomerUsingUserId = asyncHandler(
   async (req, res) => {
     try {
-      const userId = req.params.id;
-      const addressDoc = await Address.find({ customerUser_id: userId });
+      const customer_id= req.params.id;
+      const addressDoc = await Address.find({ customer_id: customer_id });
       console.log(addressDoc);
       return res.status(200).json({
-        msg: `fetched all the address for the customer with user id ${userId}`,
+        msg: `fetched all the address for the customer with user id ${customer_id}`,
         success: true,
-        addressDoc
+        addressDoc,
       });
     } catch (error) {
       console.error(error);
@@ -326,14 +330,65 @@ export const getAllAddressForCustomerUsingUserId = asyncHandler(
   }
 );
 
-export const updateAddress = asyncHandler(async(req,res)=>{
+export const updateAddress = asyncHandler(async (req, res) => {
   try {
-    const addressId= req.params.id;
+    const {customer_id, address_id} = req.params;
+    const {deliveryAddress, pincode, landmark}= req.body
 
+    const addressDoc = await Address.findOneAndUpdate(      { customer_id, "addresses._id": address_id }, // Find the customer and the address by ID
+      {
+        $set: {
+          "addresses.$.deliveryAddress": deliveryAddress,
+          "addresses.$.pincode": pincode,
+          "addresses.$.landmark": landmark,
+        },
+      },
+      { new: true } 
+    );
+
+    if(!addressDoc){
+      return res.status(404).json({
+        success: false,
+        msg: "Customer or address not found",
+      })
+    }
+
+    return res.status(200).json({
+      success: true,
+      msg : "Customer or Address not found",
+      addressDoc
+    })
   } catch (error) {
     console.error(error);
     return res.status(500).send({
-      msg: "Internal Server Error"
-    })
+      msg: "Internal Server Error",
+    });
   }
-})
+});
+
+export const deleteAddress = asyncHandler(async (req, res) => {
+  try {
+    const { customer_id, address_id } = req.params;
+    const addressDoc = await Address.findOneAndUpdate(
+      { customer_id },
+      { $pull: { addresses: { _id: address_id } } },
+      {new: true}
+    );
+    if(!addressDoc)
+    {
+      return res.status(404).json({success:false, msg:"customer or address not found"});
+    }
+    console.log(addressDoc);
+    return res.status(200).json({
+      success: true,
+      msg: `deleted the address successfully `,
+      addressDoc,
+      addressDoc
+    });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({
+      msg: "Internal Server Error",
+    });
+  }
+});
