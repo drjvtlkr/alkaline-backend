@@ -13,15 +13,15 @@ const customerSchema = new mongoose.Schema({
   dateModified: { type: Date, default: Date.now },
   shopName: reqString,
   shopNumber: reqString,
-  shopAddress: { type: mongoose.Schema.Types.ObjectId, ref: "addresses" },
-  pincode: {
-    type: Number,
-    required: true,
-  },
-  landmark: {
-    type: String,
-    required: false,
-  },
+  // shopAddress: { type: mongoose.Schema.Types.ObjectId, ref: "addresses" },
+  // pincode: {
+  //   type: Number,
+  //   required: true,
+  // },
+  // landmark: {
+  //   type: String,
+  //   required: false,
+  // },
 });
 
 const Customer = mongoose.model("customers", customerSchema);

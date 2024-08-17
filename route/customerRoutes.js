@@ -2,6 +2,7 @@ import express from "express";
 import {
   addAddress,
   deleteCustomer,
+  getAllAddressForCustomerUsingUserId,
   getAllCustomers,
   getCustomerById,
   registerCustomer,
@@ -16,6 +17,8 @@ customerRouter.route("/getAllCustomers").get(getAllCustomers);
 customerRouter.route("/getCustomerById/:id").get(getCustomerById);
 customerRouter.route("/searchQuery").get(seachCustomerByNameOrPhone);
 customerRouter.route("/deleteCustomer/:id").delete(deleteCustomer);
-customerRouter.route("/addAddress").post(addAddress);
+customerRouter.route("/addAddress/:id").post(addAddress);
+customerRouter.route("/getAllAddressesByCustomerUserId/:id").get(getAllAddressForCustomerUsingUserId)
+
 
 export default customerRouter;
