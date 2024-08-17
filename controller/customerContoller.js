@@ -281,9 +281,6 @@ export const addAddress = asyncHandler(async (req, res) => {
       });
     }
     console.log(customerId);
-
-    // Find the address document associated with the customer
-    // addressDoc = await Address.findOne({ customer_id: customerId });
     console.log(addressDoc);
 
     if (addressDoc) {
@@ -293,9 +290,6 @@ export const addAddress = asyncHandler(async (req, res) => {
         pincode,
         landmark,
       });
-      //   return res
-      //     .status(404)
-      //     .json({ success: false, msg: "Customer not found" });
     }
 
     await addressDoc.save();
@@ -315,7 +309,7 @@ export const addAddress = asyncHandler(async (req, res) => {
 export const getAllAddressForCustomerUsingUserId = asyncHandler(
   async (req, res) => {
     try {
-      const customer_id= req.params.id;
+      const customer_id = req.params.id;
       const addressDoc = await Address.find({ customer_id: customer_id });
       console.log(addressDoc);
       return res.status(200).json({
@@ -332,10 +326,11 @@ export const getAllAddressForCustomerUsingUserId = asyncHandler(
 
 export const updateAddress = asyncHandler(async (req, res) => {
   try {
-    const {customer_id, address_id} = req.params;
-    const {deliveryAddress, pincode, landmark}= req.body
+    const { customer_id, address_id } = req.params;
+    const { deliveryAddress, pincode, landmark } = req.body;
 
-    const addressDoc = await Address.findOneAndUpdate(      { customer_id, "addresses._id": address_id }, // Find the customer and the address by ID
+    const addressDoc = await Address.findOneAndUpdate(
+      { customer_id, "addresses._id": address_id },
       {
         $set: {
           "addresses.$.deliveryAddress": deliveryAddress,
@@ -343,21 +338,21 @@ export const updateAddress = asyncHandler(async (req, res) => {
           "addresses.$.landmark": landmark,
         },
       },
-      { new: true } 
+      { new: true }
     );
 
-    if(!addressDoc){
+    if (!addressDoc) {
       return res.status(404).json({
         success: false,
         msg: "Customer or address not found",
-      })
+      });
     }
 
     return res.status(200).json({
       success: true,
-      msg : "Customer or Address not found",
-      addressDoc
-    })
+      msg: "Customer or Address not found",
+      addressDoc,
+    });
   } catch (error) {
     console.error(error);
     return res.status(500).send({
@@ -372,18 +367,19 @@ export const deleteAddress = asyncHandler(async (req, res) => {
     const addressDoc = await Address.findOneAndUpdate(
       { customer_id },
       { $pull: { addresses: { _id: address_id } } },
-      {new: true}
+      { new: true }
     );
-    if(!addressDoc)
-    {
-      return res.status(404).json({success:false, msg:"customer or address not found"});
+    if (!addressDoc) {
+      return res
+        .status(404)
+        .json({ success: false, msg: "customer or address not found" });
     }
     console.log(addressDoc);
     return res.status(200).json({
       success: true,
       msg: `deleted the address successfully `,
       addressDoc,
-      addressDoc
+      addressDoc,
     });
   } catch (error) {
     console.error(error);
