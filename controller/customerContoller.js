@@ -66,10 +66,7 @@ export const updateCustomer = asyncHandler(async (req, res) => {
       lastName,
       shopName,
       shopNumber,
-      shopAddress,
       phone,
-      pincode,
-      landmark,
     } = req.body;
     const customerDoc = await Customer.findById(customerId);
     if (!customerDoc) {
@@ -85,10 +82,7 @@ export const updateCustomer = asyncHandler(async (req, res) => {
         lastName,
         shopName,
         shopNumber,
-        shopAddress,
         phone,
-        pincode,
-        landmark,
       },
       { new: true }
     );
