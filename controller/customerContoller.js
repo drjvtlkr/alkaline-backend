@@ -350,7 +350,7 @@ export const updateAddress = asyncHandler(async (req, res) => {
 
     return res.status(200).json({
       success: true,
-      msg: "Customer or Address not found",
+      msg: "Updated Successfully",
       addressDoc,
     });
   } catch (error) {
