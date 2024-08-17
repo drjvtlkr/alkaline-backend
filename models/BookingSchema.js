@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+import moment from "moment-timezone";
 
 const reqstring = {
   type: String,
@@ -7,8 +8,7 @@ const reqstring = {
 
 const paymentSchema = mongoose.Schema({
   paymentId: reqstring,
-  mode: { type: String },
-  enum: ["ONLINE", "OFFLINE"],
+  mode: { type: String, enum: ["ONLINE", "OFFLINE"], required: true },
 });
 
 const bookingSchema = mongoose.Schema({
@@ -22,11 +22,14 @@ const bookingSchema = mongoose.Schema({
     type: Date,
     required: true,
   },
-  // bookingTime: reqstring,
+
   totalPrice: { type: Number },
+
   products: [
     {
       product: { type: mongoose.Schema.Types.ObjectId, ref: "products" },
+      name: reqstring,
+      price: {type: Number, required: true},
       count: { type: Number },
     },
   ],
@@ -34,10 +37,10 @@ const bookingSchema = mongoose.Schema({
 
   status: {
     type: String,
-    enum: ["INITIATED", "PAID", "COMPLETED", "CANCELED"],
+    enum: ["INITIATED", "PAID", "COMPLETED", "CASH_ON_DELIVERY"],
     default: "INITIATED",
   },
-  createdAt: { type: Date, default: Date.now },
+  
   updatedAt: { type: Date, default: Date.now },
 });
 
