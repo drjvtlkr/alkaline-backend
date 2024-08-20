@@ -1,5 +1,5 @@
 import asyncHandler from "express-async-handler";
-import Product from "../schema/ProductsSchema.js";
+import Product from "../models/ProductsSchema.js";
 
 export const addProduct = asyncHandler(async (req, res) => {
   try {
