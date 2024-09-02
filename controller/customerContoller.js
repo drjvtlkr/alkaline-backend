@@ -60,14 +60,8 @@ export const registerCustomer = asyncHandler(async (req, res) => {
 
 export const updateCustomer = asyncHandler(async (req, res) => {
   try {
-    const {
-      customerId,
-      firstName,
-      lastName,
-      shopName,
-      shopNumber,
-      phone,
-    } = req.body;
+    const { customerId, firstName, lastName, shopName, shopNumber, phone } =
+      req.body;
     const customerDoc = await Customer.findById(customerId);
     if (!customerDoc) {
       return res

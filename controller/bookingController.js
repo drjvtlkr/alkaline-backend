@@ -4,7 +4,8 @@ import Booking from "../models/BookingSchema.js";
 
 export const initiateBooking = asyncHandler(async (req, res) => {
   try {
-    const { customerId, bookingDateTime, price, products } = req.body;
+    const { customerId, bookingDateTime, price, products, deliveryAddress } =
+      req.body;
 
     const customerDoc = await Customer.findById(customerId);
     if (!customerDoc) {
@@ -14,11 +15,14 @@ export const initiateBooking = asyncHandler(async (req, res) => {
       });
     }
 
+    console.log("delivery address: " + deliveryAddress);
+
     const bookingDoc = await Booking.create({
       customer: customerId,
       bookingDateTime,
       totalPrice: price,
-      products: products,  
+      products: products,
+      deliveryAddress: deliveryAddress,
     });
 
     res.status(201).json({
@@ -68,13 +72,12 @@ export const afterPaymentofBooking = asyncHandler(async (req, res) => {
     if (mode === "ONLINE") {
       booking.status = "PAID";
       booking.payments = { paymentId: payment, mode: mode };
-    } else if(mode === "OFFLINE") {
-      booking.status= "CASH_ON_DELIVERY"
+    } else if (mode === "OFFLINE") {
+      booking.status = "CASH_ON_DELIVERY";
       booking.payments = { paymentId: payment, mode: mode };
     }
 
     await booking.save();
-    console.log(booking);
     return res.status(200).json({ booking, success: true });
   } catch (error) {
     console.error(error);
@@ -175,14 +178,16 @@ export const markBookingComplete = asyncHandler(async (req, res) => {
       });
     }
 
-    if (bookingDoc.status !== "PAID" && bookingDoc.status !== "CASH_ON_DELIVERY") {
+    if (
+      bookingDoc.status !== "PAID" &&
+      bookingDoc.status !== "CASH_ON_DELIVERY"
+    ) {
       return res.status(400).json({
         message: `Status is invalid ${bookingDoc.status}`,
         success: false,
         bookingId,
       });
     }
-    
 
     bookingDoc.status = "COMPLETED";
     await bookingDoc.save();
@@ -200,11 +205,11 @@ export const markBookingComplete = asyncHandler(async (req, res) => {
   }
 });
 
-export const markPaymentCompletedOfBooking = asyncHandler(async(req, res)=>{
+export const markPaymentCompletedOfBooking = asyncHandler(async (req, res) => {
   try {
     const bookingId = req.params.id;
-    const {paymentId} = req.body
-    const bookingDoc =  await Booking.findById(bookingId)
+    const { paymentId } = req.body;
+    const bookingDoc = await Booking.findById(bookingId);
 
     if (!bookingDoc) {
       return res.status(404).json({
@@ -214,30 +219,31 @@ export const markPaymentCompletedOfBooking = asyncHandler(async(req, res)=>{
       });
     }
 
-    if (!bookingDoc.status){
+    if (!bookingDoc.status) {
       return res.status(400).json({
         message: `Invalid Booking Status`,
         success: false,
-        bookingDoc
-      })
-    } else if (bookingDoc.status){
-      if(bookingDoc.payments.paymentId === "CASH_ON_DELIVERY"){
+        bookingDoc,
+      });
+    } else if (bookingDoc.status) {
+      if (bookingDoc.payments.paymentId === "CASH_ON_DELIVERY") {
         bookingDoc.payments.paymentId = paymentId;
-         await bookingDoc.save()
+        await bookingDoc.save();
 
-         return res.status(200).json({
+        return res.status(200).json({
           message: `Payment id updated for bookig ${bookingId}`,
-          success:true,
-          bookingDoc
-         })
+          success: true,
+          bookingDoc,
+        });
       }
     }
-    
   } catch (error) {
     console.error(error);
-    return res.status(500).json({msg: `Internal server Error`, success: false})
+    return res
+      .status(500)
+      .json({ msg: `Internal server Error`, success: false });
   }
-})
+});
 
 export const getBookingByStatus = asyncHandler(async (req, res) => {
   try {
@@ -258,17 +264,17 @@ export const getBookingByStatus = asyncHandler(async (req, res) => {
     const totalPages = Math.ceil(totalDocuments / pageSize);
 
     const bookingDoc = await Booking.find({ status: status })
-    .sort(sort)
-    .skip(startIndex)
-    .limit(pageSize)
-    .populate({
-      path: "customer",
-      populate: {
-        path: "user",
-        model: "users",
-      },
-    })
-    .exec();
+      .sort(sort)
+      .skip(startIndex)
+      .limit(pageSize)
+      .populate({
+        path: "customer",
+        populate: {
+          path: "user",
+          model: "users",
+        },
+      })
+      .exec();
     if (!bookingDoc) {
       return res.status(404).json({
         msg: "Booking with this status not available",
@@ -278,10 +284,12 @@ export const getBookingByStatus = asyncHandler(async (req, res) => {
     }
 
     if (!bookingDoc || bookingDoc.length === 0) {
-      console.log(`Booking data fetched successfully, but nothing to return for status : ${status}`);
+      console.log(
+        `Booking data fetched successfully, but nothing to return for status : ${status}`
+      );
       return res.status(204).json({
-        msg : `Booking data fetched successfully, but nothing to return for status : ${status}`
-      })
+        msg: `Booking data fetched successfully, but nothing to return for status : ${status}`,
+      });
     }
 
     return res.status(200).json({ success: true, bookingDoc });
@@ -310,25 +318,25 @@ export const getBookingByCustomerId = asyncHandler(async (req, res) => {
     const totalPages = Math.ceil(totalDocuments / pageSize);
 
     const bookingDoc = await Booking.find({ customer: customerId })
-    .populate({
-      path: "customer",
-      populate: {
-        path: "user",
-        model: "users",
-      },
-    })
+      .populate({
+        path: "customer",
+        populate: {
+          path: "user",
+          model: "users",
+        },
+      })
       .populate("products")
       .sort(sort)
       .skip(startIndex)
       .limit(pageSize)
       .exec();
 
-      if (bookingDoc.length === 0) {
-        return res.status(404).json({
-          success: false,
-          msg: `Customer not Found`
-        })
-      }
+    if (bookingDoc.length === 0) {
+      return res.status(404).json({
+        success: false,
+        msg: `Customer not Found`,
+      });
+    }
 
     return res.status(200).json({
       bookingDoc,
@@ -368,7 +376,9 @@ export const getBookingsForDate = asyncHandler(async (req, res) => {
 
     const targetDate = new Date(date);
     if (isNaN(targetDate.getTime())) {
-      return res.status(400).json({ success: false, message: "Invalid date format" });
+      return res
+        .status(400)
+        .json({ success: false, message: "Invalid date format" });
     }
 
     const start = new Date(targetDate.setHours(0, 0, 0, 0));
@@ -485,23 +495,25 @@ export const getAllBookingsBetweenDates = asyncHandler(async (req, res) => {
   }
 });
 
-export const deleteBookingById =  asyncHandler(async(req, res) =>{
+export const deleteBookingById = asyncHandler(async (req, res) => {
   try {
-    const id =  req.params.id;
+    const id = req.params.id;
     const bookingDoc = await Booking.findByIdAndDelete(id);
 
-    if(!bookingDoc){
+    if (!bookingDoc) {
       return res.status(404).json({
         msg: `booking with id ${id} has been deleted already or it does not exist`,
-        success: false
-      })
+        success: false,
+      });
     }
     return res.status(200).json({
       success: true,
-      msg: `Booking with id ${id} deleted successfully`
-    })
+      msg: `Booking with id ${id} deleted successfully`,
+    });
   } catch (error) {
     console.error(error);
-    return res.status(500).json({msg: "Internal Server Error", success: false})
+    return res
+      .status(500)
+      .json({ msg: "Internal Server Error", success: false });
   }
-})
+});
