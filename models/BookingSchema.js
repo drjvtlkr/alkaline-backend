@@ -18,6 +18,11 @@ const bookingSchema = mongoose.Schema({
     required: true,
   },
 
+  deliveryAddress:{
+    type: String,
+    required: true,
+  },
+
   bookingDateTime: {
     type: Date,
     required: true,
