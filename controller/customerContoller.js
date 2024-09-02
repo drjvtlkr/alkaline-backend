@@ -59,6 +59,7 @@ export const registerCustomer = asyncHandler(async (req, res) => {
 });
 
 export const updateCustomer = asyncHandler(async (req, res) => {
+  
   try {
     const {
       customerId,
@@ -280,8 +281,7 @@ export const addAddress = asyncHandler(async (req, res) => {
         landmark,
       });
     }
-    console.log(customerId);
-    console.log(addressDoc);
+    
 
     if (addressDoc) {
       addressDoc.addresses.push({
@@ -311,7 +311,7 @@ export const getAllAddressForCustomerUsingUserId = asyncHandler(
     try {
       const customer_id = req.params.id;
       const addressDoc = await Address.find({ customer_id: customer_id });
-      console.log(addressDoc);
+      
       return res.status(200).json({
         msg: `fetched all the address for the customer with user id ${customer_id}`,
         success: true,

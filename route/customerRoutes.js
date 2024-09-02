@@ -21,7 +21,7 @@ customerRouter.route("/searchQuery").get(seachCustomerByNameOrPhone);
 customerRouter.route("/deleteCustomer/:id").delete(deleteCustomer);
 customerRouter.route("/addAddress/:id").post(addAddress);
 customerRouter.route("/getAllAddressesByCustomerId/:id").get(getAllAddressForCustomerUsingUserId)
-customerRouter.route("/deleteAddress/:customer_id/address/:address_id").delete(deleteAddress)
 customerRouter.route("/update/:customer_id/address/:address_id").post(updateAddress)
+customerRouter.route("/deleteAddress/:customer_id/address/:address_id").delete(deleteAddress)
 
 export default customerRouter;

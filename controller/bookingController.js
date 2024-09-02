@@ -14,6 +14,8 @@ export const initiateBooking = asyncHandler(async (req, res) => {
       });
     }
 
+    console.log("delivery address: "+deliveryAddress)
+
     const bookingDoc = await Booking.create({
       customer: customerId,
       bookingDateTime,
@@ -75,7 +77,6 @@ export const afterPaymentofBooking = asyncHandler(async (req, res) => {
     }
 
     await booking.save();
-    console.log(booking);
     return res.status(200).json({ booking, success: true });
   } catch (error) {
     console.error(error);
