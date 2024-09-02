@@ -4,8 +4,7 @@ import Booking from "../models/BookingSchema.js";
 
 export const initiateBooking = asyncHandler(async (req, res) => {
   try {
-    const { customerId, bookingDateTime, price, products, deliveryAddress } =
-      req.body;
+    const { customerId, bookingDateTime, price, products, deliveryAddress  } = req.body;
 
     const customerDoc = await Customer.findById(customerId);
     if (!customerDoc) {
@@ -15,14 +14,14 @@ export const initiateBooking = asyncHandler(async (req, res) => {
       });
     }
 
-    console.log("delivery address: " + deliveryAddress);
+    console.log("delivery address: "+deliveryAddress)
 
     const bookingDoc = await Booking.create({
       customer: customerId,
       bookingDateTime,
       totalPrice: price,
       products: products,
-      deliveryAddress: deliveryAddress,
+      deliveryAddress:deliveryAddress
     });
 
     res.status(201).json({
