@@ -12,7 +12,7 @@ const port = process.env.PORT || 4000;
 
 const app = express();
 
-const corsOrigin = ["http://localhost:5173", "http://localhost:5553"];
+const corsOrigin = ["https://alkaline-admin.vercel.app", "http://localhost:5553"];
 
 app.use(
   cors({
