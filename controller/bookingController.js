@@ -1,6 +1,6 @@
 import asyncHandler from "express-async-handler";
-import Customer from "../schema/CustomerSchema.js";
-import Booking from "../schema/BookingSchema.js";
+import Customer from "../models/CustomerSchema.js";
+import Booking from "../models/BookingSchema.js";
 
 export const initiateBooking = asyncHandler(async (req, res) => {
   try {
@@ -114,22 +114,17 @@ export const getAllBookingsPagination = asyncHandler(async (req, res) => {
     const page = parseInt(req.query.page) || 1;
     const pageSize = parseInt(req.query.pageSize) || 10;
     const sortField = req.query.sortField || "bookingDateTime";
-    const sortOrder = req.query.sortOrder || "desc";
-
-    const sort = {};
-    sort[sortField] = sortOrder === "desc" ? 1 : -1;
+    const sortOrder = req.query.sortOrder === "asc" ? -1 : 1;
 
     const startIndex = (page - 1) * pageSize;
 
-    const totalDocuments = await Booking.countDocuments({
-      status: { $in: ["PAID", "ASSIGNED", "COMPLETED", "REJECTED"] },
-    });
+    const totalDocuments = await Booking.countDocuments();
     const totalPages = Math.ceil(totalDocuments / pageSize);
 
     const bookings = await Booking.find({
-      status: { $in: ["PAID", "ASSIGNED", "COMPLETED", "REJECTED"] },
+      status: { $in: ["INITIATED", "PAID", "COMPLETED", "CASH_ON_DELIVERY"] },
     })
-      .sort(sort)
+      .sort({ [sortField]: sortOrder })
       .skip(startIndex)
       .limit(pageSize)
       .populate({
@@ -154,7 +149,7 @@ export const getAllBookingsPagination = asyncHandler(async (req, res) => {
       success: true,
     });
   } catch (error) {
-    console.log(error);
+    console.error(error);
     return res.status(500).json({ error, success: false });
   }
 });
@@ -328,6 +323,13 @@ export const getBookingByCustomerId = asyncHandler(async (req, res) => {
       .limit(pageSize)
       .exec();
 
+      if (bookingDoc.length === 0) {
+        return res.status(404).json({
+          success: false,
+          msg: `Customer not Found`
+        })
+      }
+
     return res.status(200).json({
       bookingDoc,
       pagination: {
@@ -482,3 +484,24 @@ export const getAllBookingsBetweenDates = asyncHandler(async (req, res) => {
     return res.status(500).json({ success: false, error });
   }
 });
+
+export const deleteBookingById =  asyncHandler(async(req, res) =>{
+  try {
+    const id =  req.params.id;
+    const bookingDoc = await Booking.findByIdAndDelete(id);
+
+    if(!bookingDoc){
+      return res.status(404).json({
+        msg: `booking with id ${id} has been deleted already or it does not exist`,
+        success: false
+      })
+    }
+    return res.status(200).json({
+      success: true,
+      msg: `Booking with id ${id} deleted successfully`
+    })
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({msg: "Internal Server Error", success: false})
+  }
+})

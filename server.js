@@ -5,8 +5,8 @@ import dotenv from "dotenv";
 import mongooseConnection from "./mongo.js";
 import appRoutes from "./route/index.js";
 dotenv.config();
-import fs from 'fs';
-import https from 'https';
+import fs from "fs";
+import https from "https";
 
 const port = process.env.PORT || 4000;
 
@@ -35,12 +35,15 @@ app.get("/health", (req, res) => {
 
 app.use("/api", appRoutes);
 
+app.use((error, req, res, next) => {
+  res.status(500).send("An internal server error occured");
+});
+
 if (process.env.DEPLOY_ENV === "local") {
   app.listen(4000, (req, res) => {
     console.log(`Server is listening on port ${port}`);
   });
-}
-else if (process.env.DEPLOY_ENV === "prod") {
+} else if (process.env.DEPLOY_ENV === "prod") {
   const httpsServer = https.createServer(
     {
       cert: fs.readFileSync(process.env.SSL_CRT_PATH),

@@ -1,6 +1,6 @@
 import asyncHandler from "express-async-handler";
-import User from "../schema/UserSchema.js";
-import Customer from "../schema/CustomerSchema.js";
+import User from "../models/UserSchema.js";
+import Customer from "../models/CustomerSchema.js";
 import jwt from "jsonwebtoken";
 import dotenv from "dotenv";
 dotenv.config();
@@ -145,7 +145,21 @@ export const getAllUsers = asyncHandler(async (req, res) => {
   }
 });
 
-export const deleteUser = asyncHandler(async (req, res) => {
+export const getAllAdmins = asyncHandler(async (req, res) => {
+  try {
+    const admins = await User.find({ role: "ADMIN" });
+    if (!admins || admins.length === 0) {
+      return res.status(404).json({ success: false, msg: "No admins found" });
+    }
+
+    return res.status(200).json({ success: true, admins });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ success: false, msg: "Internal Server Error" });
+  }
+});
+
+export const deleteUser =  asyncHandler(async(req, res)=>{
   try {
     const id = req.params.id;
     const userDoc = await User.findByIdAndDelete(id);

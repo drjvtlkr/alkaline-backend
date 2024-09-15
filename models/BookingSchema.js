@@ -1,5 +1,4 @@
 import mongoose from "mongoose";
-
 import moment from "moment-timezone";
 
 const reqstring = {
@@ -41,8 +40,6 @@ const bookingSchema = mongoose.Schema({
     enum: ["INITIATED", "PAID", "COMPLETED", "CASH_ON_DELIVERY"],
     default: "INITIATED",
   },
-
-  createdAt: { type: Date, default: Date.now },
   
   updatedAt: { type: Date, default: Date.now },
 });

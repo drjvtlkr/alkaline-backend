@@ -9,7 +9,8 @@ import {
   initiateBooking,
   markBookingComplete,
   markPaymentCompletedOfBooking,
-  getBookingsForDate
+  getBookingsForDate,
+  deleteBookingById
 } from "../controller/bookingController.js";
 
 
@@ -25,5 +26,6 @@ bookingRouter.route("/getBookingByStatus/:status").get(getBookingByStatus)
 bookingRouter.route("/getBookingByCustomer/:id").get(getBookingByCustomerId)//this has pagination
 bookingRouter.route("/getAllBookingsBetweenDatesPagination").get(getAllBookingsBetweenDates);
 bookingRouter.route("/getBookingForDate").get(getBookingsForDate)
+bookingRouter.route("/deleteBooking/:id").delete(deleteBookingById)
 
 export default bookingRouter;
