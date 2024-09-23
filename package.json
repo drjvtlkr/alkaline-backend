@@ -1,7 +1,7 @@
 {
   "name": "alkaline_backend",
   "version": "1.0.0",
-  "description": "",
+  "description": "A simple Nodejs backend written in JavaScript for Dhongadi Waters",
   "main": "server.js",
   "type": "module",
   "scripts": {
@@ -14,11 +14,11 @@
   "license": "ISC",
   "dependencies": {
     "bcryptjs": "^2.4.3",
-    "body-parser": "^1.20.2",
+    "body-parser": "^1.20.3",
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",
     "env": "^0.0.2",
-    "express": "^4.19.2",
+    "express": "^4.21.0",
     "express-async-handler": "^1.2.0",
     "fs": "^0.0.1-security",
     "generate-password": "^1.7.1",
@@ -26,7 +26,7 @@
     "jsonwebtoken": "^9.0.2",
     "mogodb": "^0.0.1-security",
     "moment-timezone": "^0.5.45",
-    "mongoose": "^8.4.1",
+    "mongoose": "^8.6.3",
     "razorpay": "^2.9.4"
   },
   "devDependencies": {
